@@ -130,3 +130,12 @@ MEDIA_URL = '/media/'
 # Percorso fisico sul disco dove Django salva i file caricaticati dall'utente
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# Redirect dopo il login - va alla home
+LOGIN_REDIRECT_URL = '/'
+
+# Se si prova ad accendere a una pagina senza essere loggati Django reindirizza al login
+LOGIN_URL = '/accounts/login/'
+
+# Redirect dopo il logout - torna alla home
+LOGOUT_REDIRECT_URL = '/'
+
