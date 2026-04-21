@@ -1,5 +1,7 @@
 from django.urls import path
+from . import views
 
 urlpatterns = [
-    # le viste le aggiungiamo dopo
+    path('', views.home, name='home'),
+    path('register/', views.register, name='register'),
 ]

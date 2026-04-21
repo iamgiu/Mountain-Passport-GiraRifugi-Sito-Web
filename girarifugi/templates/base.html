@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>GiraRifugi</title>
+</head>
+<body>
+    <header>
+        <h1>Mountain Passport</h1>  
+
+        <nav>
+            <a href="/">Home</a> |
+            <a href="#">Mappa</a> |
+            <a href="#">Leaderboard</a> |
+
+            {% if user.is_authenticated %}
+                Ciao, {{ user.username }}! |
+                {% if user.groups.all.0.name == 'Escursionista' %}
+                    <a href="/passaporto/">Passaporto</a> |
+                    <a href="/preferiti/">Preferiti</a> |
+                {% elif user.groups.all.0.name == 'GestoreRifugio' %}
+                    <a href="/dashboard/">Dashboard</a> |
+                {% endif %}
+                <form method="post" action="/accounts/logout/" style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% else %}
+                <a href="/accounts/login/">Login</a> |
+                <a href="/register/">Registrati</a>
+            {% endif %}
+        </nav>
+        
+    </header>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2026 GiraRifugi — Tutti i diritti riservati</p>
+    </footer>
+</body>
+</html>
