@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ rifugio.nome }} — GiraRifugi{% endblock %}
+
+{% block content %}
+    <h1>{{ rifugio.nome }}</h1>
+    {% if rifugio.immagine %}
+    <img src="{{ rifugio.immagine.url }}" alt="{{ rifugio.nome }}">
+    {% else %}
+    <p>📷 Nessuna immagine disponibile</p>
+    {% endif %}
+    <p><strong>Regione:</strong> {{ rifugio.regione }}</p>
+    <p><strong>Località:</strong> {{ rifugio.localita }}</p>
+    <p><strong>Altitudine:</strong> {{ rifugio.altitudine }}m</p>
+    <p><strong>Tipo:</strong> {{ rifugio.tipo }}</p>
+    <p><strong>Posti letto:</strong> {{ rifugio.posti_letto }}</p>
+    <p><strong>Posti disponibili:</strong> {{ rifugio.posti_disponibili }}</p>
+    <p><strong>Descrizione:</strong> {{ rifugio.descrizione }}</p>
+    
+    <a href="/">← Torna alla home</a>
+{% endblock %}

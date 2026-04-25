@@ -3,5 +3,47 @@
 {% block title %}Home — GiraRifugi{% endblock %}
 
 {% block content %}
-    <h1>Benvenuto su GiraRifugi!</h1>
+
+{% if user.is_authenticated %}
+    <!-- FORM RICERCA -->
+    <form method="get" action="/">
+        <input type="text" name="nome" placeholder="Nome rifugio" value="{{ nome }}">
+        <input type="text" name="regione" placeholder="Regione" value="{{ regione }}">
+        <input type="number" name="quota_min" placeholder="Quota min" value="{{ quota_min }}">
+        <input type="number" name="quota_max" placeholder="Quota max" value="{{ quota_max }}">
+        <button type="submit">Cerca</button>
+    </form>
+
+    <!-- LISTA RIFUGI -->
+    {% for rifugio in rifugi %}
+        <div>
+            <h3>{{ rifugio.nome }}</h3>
+            <p>{{ rifugio.regione }} — {{ rifugio.altitudine }}m</p>
+            <p>{{ rifugio.tipo }} — Posti: {{ rifugio.posti_disponibili }}/{{ rifugio.posti_letto }}</p>
+            <a href="/rifugi/{{ rifugio.id }}/">Dettaglio</a>
+        </div>
+        <hr>
+    {% empty %}
+        <p>Nessun rifugio trovato.</p>
+    {% endfor %}
+
+    <!-- PAGINAZIONE -->
+    <div>
+        {% if rifugi.has_previous %}
+            <a href="?page={{ rifugi.previous_page_number }}">← Precedente</a>
+        {% endif %}
+        Pagina {{ rifugi.number }} di {{ rifugi.paginator.num_pages }}
+        {% if rifugi.has_next %}
+            <a href="?page={{ rifugi.next_page_number }}">Successiva →</a>
+        {% endif %}
+    </div>
+
+{% else %}
+    <!-- PAGINA DI BENVENUTO -->
+    <h1>Esplora i rifugi di montagna</h1>
+    <p>Timbra i rifugi, colleziona punti e scopri nuove vette!</p>
+    <a href="/accounts/login/">Accedi</a>
+    <a href="/register/">Registrati gratis</a>
+{% endif %}
+
 {% endblock %}
