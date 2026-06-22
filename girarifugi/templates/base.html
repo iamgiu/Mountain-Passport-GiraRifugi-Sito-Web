@@ -1,45 +1,64 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>GiraRifugi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}GiraRifugi{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <link rel="stylesheet" href="{% static 'css/detail.css' %}">
+    <link rel="stylesheet" href="{% static 'css/forms.css' %}">
+    <link rel="stylesheet" href="{% static 'css/pages.css' %}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
-    <header>
-        <h1>Mountain Passport</h1>  
-
-        <nav>
-            <a href="/">Home</a> |
-            <a href="#">Mappa</a> |
-            <a href="#">Leaderboard</a> |
-
-            {% if user.is_authenticated %}
-                Ciao, {{ user.username }}! |
-                {% if user.groups.all.0.name == 'Escursionista' %}
-                    <a href="/passaporto/">Passaporto</a> |
-                    <a href="/preferiti/">Preferiti</a> |
-                {% elif user.groups.all.0.name == 'GestoreRifugio' %}
-                    <a href="/dashboard/">Dashboard</a> |
-                {% endif %}
+ 
+<nav class="navbar">
+    <a href="{% url 'home' %}" class="navbar-brand">🏔️ Mountain Passport</a>
+ 
+    <ul class="navbar-nav">
+        <li><a href="{% url 'home' %}">Home</a></li>
+        <li><a href="#">Mappa</a></li>
+        <li><a href="{% url 'leaderboard' %}">Leaderboard</a></li>
+ 
+        {% if user.is_authenticated %}
+            {% if user.groups.all.0.name == 'Escursionista' %}
+                <li><a href="{% url 'passaporto' %}">Passaporto</a></li>
+            {% elif user.groups.all.0.name == 'GestoreRifugio' %}
+                <li><a href="{% url 'dashboard_gestore' %}">Dashboard</a></li>
+            {% elif user.groups.all.0.name == 'Admin' or user.is_superuser %}
+                <li><a href="{% url 'pannello_admin' %}">Pannello Admin</a></li>
+            {% endif %}
+            <li><span class="navbar-user">Ciao, {{ user.username }}!</span></li>
+            <li>
                 <form method="post" action="/accounts/logout/" style="display:inline">
                     {% csrf_token %}
-                    <button type="submit">Logout</button>
+                    <button type="submit" class="btn-logout">Logout</button>
                 </form>
-            {% else %}
-                <a href="/accounts/login/">Login</a> |
-                <a href="/register/">Registrati</a>
-            {% endif %}
-        </nav>
-        
-    </header>
-
-    <main>
-        {% block content %}
-        {% endblock %}
-    </main>
-
-    <footer>
-        <p>&copy; 2026 GiraRifugi — Tutti i diritti riservati</p>
-    </footer>
+            </li>
+        {% else %}
+            <li><a href="/accounts/login/">Login</a></li>
+            <li><a href="{% url 'register' %}">Registrati</a></li>
+        {% endif %}
+    </ul>
+</nav>
+ 
+<main>
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+ 
+    {% block content %}{% endblock %}
+</main>
+ 
+<footer>
+    <p>&copy; 2026 GiraRifugi — Tutti i diritti riservati</p>
+</footer>
+ 
 </body>
 </html>

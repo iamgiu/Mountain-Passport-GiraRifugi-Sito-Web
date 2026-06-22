@@ -139,3 +139,4 @@ LOGIN_URL = '/accounts/login/'
 # Redirect dopo il logout - torna alla home
 LOGOUT_REDIRECT_URL = '/'
 
+

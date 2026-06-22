@@ -1,21 +1,163 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ rifugio.nome }} — GiraRifugi{% endblock %}
 
 {% block content %}
-    <h1>{{ rifugio.nome }}</h1>
+
+<!-- HERO FOTO -->
+<div class="detail-hero">
     {% if rifugio.immagine %}
-    <img src="{{ rifugio.immagine.url }}" alt="{{ rifugio.nome }}">
+        <img src="{{ rifugio.immagine.url }}" alt="{{ rifugio.nome }}">
     {% else %}
-    <p>📷 Nessuna immagine disponibile</p>
+        <div class="detail-hero-placeholder"></div>
     {% endif %}
-    <p><strong>Regione:</strong> {{ rifugio.regione }}</p>
-    <p><strong>Località:</strong> {{ rifugio.localita }}</p>
-    <p><strong>Altitudine:</strong> {{ rifugio.altitudine }}m</p>
-    <p><strong>Tipo:</strong> {{ rifugio.tipo }}</p>
-    <p><strong>Posti letto:</strong> {{ rifugio.posti_letto }}</p>
-    <p><strong>Posti disponibili:</strong> {{ rifugio.posti_disponibili }}</p>
-    <p><strong>Descrizione:</strong> {{ rifugio.descrizione }}</p>
-    
-    <a href="/">← Torna alla home</a>
+</div>
+
+<div class="detail-body">
+
+    <!-- NOME + TASTI -->
+    <div class="detail-header">
+        <h1>{{ rifugio.nome }}</h1>
+        {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
+        <div style="display:flex; gap:0.5rem;">
+            <a href="#prenota" class="btn-preferito btn-prenota" title="Prenota">
+                <span class="material-icons">calendar_today</span>
+            </a>
+            <form method="post" action="#">
+                {% csrf_token %}
+                <button type="submit" class="btn-preferito" title="Salva nei preferiti">
+                    <span class="material-icons">bookmark</span>
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- PUNTI -->
+    <p class="detail-punti">+{{ rifugio.altitudine|floatformat:0 }} punti</p>
+
+    <!-- 4 STAT CARDS sulla stessa riga -->
+    <div class="detail-stats">
+        <div class="detail-stat-card">
+            <span class="material-icons detail-stat-icon">terrain</span>
+            <span class="detail-stat-value">{{ rifugio.altitudine }}m</span>
+            <span class="detail-stat-label">Quota</span>
+        </div>
+        <div class="detail-stat-card">
+            <span class="material-icons detail-stat-icon">place</span>
+            <span class="detail-stat-value">{{ rifugio.regione }}</span>
+            <span class="detail-stat-label">Luogo</span>
+        </div>
+        <div class="detail-stat-card">
+            <span class="material-icons detail-stat-icon">home</span>
+            <span class="detail-stat-value">{{ rifugio.tipo }}</span>
+            <span class="detail-stat-label">Tipo</span>
+        </div>
+        <div class="detail-stat-card">
+            <span class="material-icons detail-stat-icon">star</span>
+            <span class="detail-stat-value">{{ rifugio.altitudine }}</span>
+            <span class="detail-stat-label">Punti</span>
+        </div>
+    </div>
+
+    {% if rifugio.descrizione %}
+    <p class="detail-descrizione">{{ rifugio.descrizione }}</p>
+    {% endif %}
+
+    <!-- SERVIZI -->
+    <div class="detail-section">
+        <h2>Servizi</h2>
+        <ul class="detail-list">
+            <li>
+                <span class="material-icons">bed</span>
+                {{ rifugio.posti_letto }} posti letto
+            </li>
+            <li>
+                <span class="material-icons">check_circle</span>
+                {{ rifugio.posti_disponibili }} posti disponibili
+            </li>
+            <li>
+                <span class="material-icons">location_on</span>
+                {{ rifugio.localita }}
+            </li>
+        </ul>
+    </div>
+
+    <!-- RECENSIONI -->
+    <div class="detail-section">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.9rem;">
+            <h2 style="margin-bottom:0;">Recensioni</h2>
+            {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
+            <a href="#" class="btn btn-outline btn-sm" style="display:inline-flex; align-items:center; gap:0.4rem;">
+                <span class="material-icons" style="font-size:1rem;">edit</span>
+                Scrivi recensione
+            </a>
+            {% endif %}
+        </div>
+        {% if recensioni %}
+            {% for r in recensioni %}
+            <div class="recensione-card">
+                <div class="recensione-header">
+                    <span class="material-icons">account_circle</span>
+                    <strong>{{ r.escursionista.username }}</strong>
+                    <span class="recensione-voto">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= r.voto %}
+                                <span class="material-icons star-on">star</span>
+                            {% else %}
+                                <span class="material-icons star-off">star</span>
+                            {% endif %}
+                        {% endfor %}
+                    </span>
+                    <span class="recensione-data">{{ r.data|date:"d/m/Y" }}</span>
+                </div>
+                <p>{{ r.testo }}</p>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="recensione-vuota">
+                <span class="material-icons">rate_review</span>
+                <p>Nessuna recensione ancora. Sii il primo!</p>
+            </div>
+        {% endif %}
+
+        {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
+        {% endif %}
+    </div>
+
+    <!-- FORM PRENOTAZIONE -->
+    {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
+    <div class="detail-section" id="prenota">
+        <h2>Prenota</h2>
+        <form method="post" action="{% url 'prenota' rifugio.pk %}">
+            {% csrf_token %}
+            <div class="prenota-grid">
+                <div class="form-group">
+                    <label>Data arrivo</label>
+                    <input type="date" name="data_arrivo" required>
+                </div>
+                <div class="form-group">
+                    <label>Data partenza</label>
+                    <input type="date" name="data_partenza" required>
+                </div>
+                <div class="form-group">
+                    <label>Numero ospiti</label>
+                    <input type="number" name="num_ospiti" min="1" max="{{ rifugio.posti_disponibili }}" value="1" required>
+                </div>
+            </div>
+            <p style="font-size:0.82rem; color:var(--gray); margin-bottom:0.75rem;">
+                Posti disponibili: <strong>{{ rifugio.posti_disponibili }}</strong>
+            </p>
+            <button type="submit" class="btn btn-primary">Invia prenotazione</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <a href="{% url 'home' %}" class="btn btn-outline btn-sm" style="margin-top:0.5rem; display:inline-flex; align-items:center; gap:0.4rem;">
+        <span class="material-icons" style="font-size:1rem;">arrow_back</span>
+        Torna alla home
+    </a>
+
+</div>
 {% endblock %}

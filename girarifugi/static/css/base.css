@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+ 
+:root {
+  --green-dark:  #016939;
+  --green:       #4B9978;
+  --green-light: #AFDCCD;
+  --green-bg:    #D1E9E1;
+  --blue-dark:   #073B88;
+  --blue:        #2F629A;
+  --blue-light:  #6B9AB5;
+  --gray:        #666666;
+  --gray-light:  #E0E0E0;
+  --gray-bg:     #F5F5F5;
+  --white:       #FFFFFF;
+  --shadow:      0 2px 12px rgba(0,0,0,0.10);
+  --radius:      12px;
+  --radius-sm:   8px;
+}
+ 
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: var(--green-bg);
+  color: var(--blue-dark);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+ 
+a { color: var(--blue); text-decoration: none; }
+a:hover { color: var(--green-dark); text-decoration: underline; }
+ 
+/* Navbar */
+.navbar {
+  background-color: var(--green-dark);
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.navbar-brand {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--white) !important;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+}
+.navbar-brand:hover { color: var(--green-light) !important; text-decoration: none; }
+.navbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  list-style: none;
+}
+.navbar-nav a {
+  color: var(--green-light);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.navbar-nav a:hover { color: var(--white); text-decoration: none; }
+.navbar-user { color: var(--white); font-size: 0.9rem; font-weight: 600; }
+.btn-logout {
+  background: transparent;
+  border: 1px solid var(--green-light);
+  color: var(--green-light);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.btn-logout:hover { background: var(--green-light); color: var(--green-dark); }
+ 
+/* Main */
+main {
+  flex: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  width: 100%;
+}
+ 
+/* Bottoni */
+.btn {
+  display: inline-block;
+  padding: 0.65rem 1.5rem;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-family: 'Montserrat', sans-serif;
+  text-decoration: none;
+}
+.btn-primary { background-color: var(--green); color: var(--white); }
+.btn-primary:hover { background-color: var(--green-dark); color: var(--white); text-decoration: none; }
+.btn-secondary { background-color: transparent; color: var(--white); border: 2px solid var(--white); }
+.btn-secondary:hover { background-color: var(--white); color: var(--green-dark); text-decoration: none; }
+.btn-outline { background-color: transparent; color: var(--green-dark); border: 2px solid var(--green-dark); }
+.btn-outline:hover { background-color: var(--green-dark); color: var(--white); text-decoration: none; }
+.btn-danger { background-color: #c0392b; color: var(--white); }
+.btn-danger:hover { background-color: #a93226; color: var(--white); text-decoration: none; }
+.btn-sm { padding: 0.4rem 1rem; font-size: 0.82rem; }
+ 
+/* Messaggi Django */
+.messages { list-style: none; margin-bottom: 1rem; }
+.messages li { padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.9rem; margin-bottom: 0.5rem; }
+.messages .success { background: var(--green-bg); color: var(--green-dark); }
+.messages .error   { background: #fde8e8; color: #c0392b; }
+.messages .warning { background: #fff3cd; color: #856404; }
+ 
+/* Pagine errore */
+.error-page { text-align: center; padding: 4rem 2rem; }
+.error-page h2 { font-size: 2rem; color: var(--blue-dark); margin-bottom: 1rem; }
+.error-page p  { color: var(--gray); margin-bottom: 1.5rem; }
+ 
+/* Footer */
+footer {
+  background-color: var(--green-dark);
+  color: var(--green-light);
+  text-align: center;
+  padding: 1.2rem;
+  font-size: 0.85rem;
+  margin-top: auto;
+}
+ 
+/* Responsive */
+@media (max-width: 640px) {
+  .navbar { padding: 0 1rem; }
+  .navbar-nav { gap: 0.75rem; }
+  main { padding: 1.25rem 1rem; }
+}
