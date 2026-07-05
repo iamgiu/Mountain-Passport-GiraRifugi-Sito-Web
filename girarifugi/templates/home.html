@@ -5,118 +5,251 @@
 
 {% if user.is_authenticated %}
 
-    <!-- BENVENUTO -->
     <div class="home-welcome">
         <h1>Benvenuto, {{ user.username }}!</h1>
+        {% if user.groups.all.0.name == 'GestoreRifugio' %}
+        <p>Gestisci i tuoi rifugi e le prenotazioni.</p>
+        {% elif user.groups.all.0.name == 'GuidaAlpina' %}
+        <p>Organizza i tuoi itinerari e gestisci le iscrizioni.</p>
+        {% else %}
         <p>Naviga tra i rifugi disponibili, ricevi supporto, fatti guidare.</p>
-    </div>
-
-    <!-- CARD PUNTEGGIO -->
-    <div class="score-card">
-        <div class="score-card-text">
-            <h2>Il tuo punteggio</h2>
-            <p>Scopri come raggiungere i tuoi obiettivi!</p>
-            <a href="{% url 'passaporto' %}" class="btn-scopri">SCOPRI</a>
-        </div>
-        <div class="score-ring">
-            <svg viewBox="0 0 80 80" width="90" height="90">
-                <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="7"/>
-                <circle cx="40" cy="40" r="32" fill="none" stroke="white" stroke-width="7"
-                    stroke-dasharray="201" stroke-dashoffset="140"
-                    stroke-linecap="round" transform="rotate(-90 40 40)"/>
-            </svg>
-            <span class="score-percent">30%</span>
-        </div>
-    </div>
-
-    <!-- LISTA PREFERITI RIFUGI -->
-    <h2 class="home-section-title">Rifugi Preferiti</h2>
-
-    <div class="rifugi-scroll">
-        {% for rifugio in rifugi_preferiti %}
-        <a href="{% url 'rifugio' rifugio.pk %}" class="rifugio-card-big">
-            {% if rifugio.immagine %}
-                <img src="{{ rifugio.immagine.url }}" alt="{{ rifugio.nome }}">
-            {% else %}
-                <div class="rifugio-card-placeholder">🏔️</div>
-            {% endif %}
-            <div class="rifugio-card-overlay"></div>
-            <div class="rifugio-card-content">
-                <h3>{{ rifugio.nome }}</h3>
-                <div class="rifugio-card-meta">
-                    <span>{{ rifugio.altitudine }} m</span>
-                    <span>{{ rifugio.regione }}</span>
-                </div>
-            </div>
-        </a>
-        {% empty %}
-        <p style="color: var(--gray); padding: 1rem 0;">Nessun rifugio trovato.</p>
-        {% endfor %}
-    </div>
-
-        <!-- LISTA MENSILE RIFUGI -->
-    <h2 class="home-section-title">Rifugi Mensili</h2>
-
-    <div class="rifugi-scroll">
-        {% for rifugio in rifugi_mensili %}
-        <a href="{% url 'rifugio' rifugio.pk %}" class="rifugio-card-big">
-            {% if rifugio.immagine %}
-                <img src="{{ rifugio.immagine.url }}" alt="{{ rifugio.nome }}">
-            {% else %}
-                <div class="rifugio-card-placeholder">🏔️</div>
-            {% endif %}
-            <div class="rifugio-card-overlay"></div>
-            <div class="rifugio-card-content">
-                <h3>{{ rifugio.nome }}</h3>
-                <div class="rifugio-card-meta">
-                    <span>{{ rifugio.altitudine }} m</span>
-                    <span>{{ rifugio.regione }}</span>
-                </div>
-            </div>
-        </a>
-        {% empty %}
-        <p style="color: var(--gray); padding: 1rem 0;">Nessun rifugio trovato.</p>
-        {% endfor %}
-    </div>
-
-        <!-- LISTA CASUALE RIFUGI -->
-    <h2 class="home-section-title">Esplora nuovi rifugi</h2>
-
-    <div class="rifugi-scroll">
-        {% for rifugio in rifugi_casuali %}
-        <a href="{% url 'rifugio' rifugio.pk %}" class="rifugio-card-big">
-            {% if rifugio.immagine %}
-                <img src="{{ rifugio.immagine.url }}" alt="{{ rifugio.nome }}">
-            {% else %}
-                <div class="rifugio-card-placeholder">🏔️</div>
-            {% endif %}
-            <div class="rifugio-card-overlay"></div>
-            <div class="rifugio-card-content">
-                <h3>{{ rifugio.nome }}</h3>
-                <div class="rifugio-card-meta">
-                    <span>{{ rifugio.altitudine }} m</span>
-                    <span>{{ rifugio.regione }}</span>
-                </div>
-            </div>
-        </a>
-        {% empty %}
-        <p style="color: var(--gray); padding: 1rem 0;">Nessun rifugio trovato.</p>
-        {% endfor %}
-    </div>
-
-    <!-- PAGINAZIONE -->
-    <div class="pagination">
-        {% if rifugi.has_previous %}
-            <a href="?page={{ rifugi.previous_page_number }}&nome={{ nome }}&regione={{ regione }}&quota_min={{ quota_min }}&quota_max={{ quota_max }}">← Precedente</a>
-        {% endif %}
-        <span>Pagina {{ rifugi.number }} di {{ rifugi.paginator.num_pages }}</span>
-        {% if rifugi.has_next %}
-            <a href="?page={{ rifugi.next_page_number }}&nome={{ nome }}&regione={{ regione }}&quota_min={{ quota_min }}&quota_max={{ quota_max }}">Successiva →</a>
         {% endif %}
     </div>
+
+    <!-- ══ GESTORE ══ -->
+    {% if user.groups.all.0.name == 'GestoreRifugio' %}
+
+    {% if prenotazioni_in_attesa > 0 %}
+    <div class="alert-card">
+        <span class="material-icons">notifications_active</span>
+        <p>Hai <strong>{{ prenotazioni_in_attesa }}</strong> prenotazion{% if prenotazioni_in_attesa == 1 %}e{% else %}i{% endif %} in attesa.</p>
+        <a href="{% url 'dashboard_gestore' %}" class="btn btn-primary btn-sm">Vai alla dashboard</a>
+    </div>
+    {% endif %}
+
+    <h2 class="home-section-title">I tuoi rifugi</h2>
+    <div class="rifugi-scroll">
+        {% for r in rifugi_gestore %}
+        <a href="{% url 'rifugio' r.pk %}" class="rifugio-card-big">
+            {% if r.immagine %}
+                <img src="{{ r.immagine.url }}" alt="{{ r.nome }}">
+            {% else %}
+                <div class="rifugio-card-placeholder"></div>
+            {% endif %}
+            <div class="rifugio-card-overlay"></div>
+            <div class="rifugio-card-content">
+                <h3>{{ r.nome }}</h3>
+                <div class="rifugio-card-meta">
+                    <span>{{ r.altitudine }} m</span>
+                    <span>{{ r.regione }}</span>
+                </div>
+            </div>
+        </a>
+        {% empty %}
+        <p style="color: var(--gray);">Nessun rifugio assegnato.</p>
+        {% endfor %}
+    </div>
+
+    <h2 class="home-section-title">I tuoi eventi</h2>
+    <div class="rifugi-scroll">
+        {% for r in rifugi_gestore %}
+            {% for evento in r.eventi.all %}
+            <a href="{% url 'dashboard_gestore' %}" class="rifugio-card-big">
+                {% if r.immagine %}
+                    <img src="{{ r.immagine.url }}" alt="{{ evento.titolo }}">
+                {% else %}
+                    <div class="rifugio-card-placeholder"></div>
+                {% endif %}
+                <div class="rifugio-card-overlay"></div>
+                <div class="rifugio-card-content">
+                    <h3>{{ evento.titolo }}</h3>
+                    <div class="rifugio-card-meta">
+                        <span>{{ evento.data }}</span>
+                        <span>{{ r.nome }}</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        {% empty %}
+        <p style="color: var(--gray);">Nessun evento ancora.</p>
+        {% endfor %}
+    </div>
+
+    <!-- ══ GUIDA ALPINA ══ -->
+    {% elif user.groups.all.0.name == 'GuidaAlpina' %}
+
+        <h2 class="home-section-title">I miei itinerari</h2>
+        <div class="rifugi-scroll">
+            {% for it in itinerari_guida %}
+            <a href="{% url 'dashboard_guida' %}" class="rifugio-card-big">
+                <div class="rifugio-card-placeholder"></div>
+                <div class="rifugio-card-overlay"></div>
+                <div class="rifugio-card-content">
+                    <h3>{{ it.titolo }}</h3>
+                    <div class="rifugio-card-meta">
+                        <span>{{ it.data }}</span>
+                        <span>{{ it.get_difficolta_display }}</span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <p style="color: var(--gray);">Nessun itinerario ancora.</p>
+            {% endfor %}
+        </div>
+
+        <h2 class="home-section-title">Rifugi Preferiti</h2>
+        <div class="rifugi-scroll">
+            {% for rifugio in rifugi_preferiti %}
+            <a href="{% url 'rifugio' rifugio.pk %}" class="rifugio-card-big">
+                {% if rifugio.immagine %}<img src="{{ rifugio.immagine.url }}" alt="{{ rifugio.nome }}">
+                {% else %}<div class="rifugio-card-placeholder"></div>{% endif %}
+                <div class="rifugio-card-overlay"></div>
+                <div class="rifugio-card-content">
+                    <h3>{{ rifugio.nome }}</h3>
+                    <div class="rifugio-card-meta">
+                        <span>{{ rifugio.altitudine }} m</span>
+                        <span>{{ rifugio.regione }}</span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <p style="color: var(--gray);">Nessun preferito ancora.</p>
+            {% endfor %}
+        </div>
+
+        <h2 class="home-section-title">Rifugi Mensili</h2>
+        <div class="rifugi-scroll">
+            {% for rifugio in rifugi_mensili %}
+            <a href="{% url 'rifugio' rifugio.pk %}" class="rifugio-card-big">
+                {% if rifugio.immagine %}<img src="{{ rifugio.immagine.url }}" alt="{{ rifugio.nome }}">
+                {% else %}<div class="rifugio-card-placeholder"></div>{% endif %}
+                <div class="rifugio-card-overlay"></div>
+                <div class="rifugio-card-content">
+                    <h3>{{ rifugio.nome }}</h3>
+                    <div class="rifugio-card-meta">
+                        <span>{{ rifugio.altitudine }} m</span>
+                        <span>{{ rifugio.regione }}</span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <p style="color: var(--gray);">Nessun rifugio.</p>
+            {% endfor %}
+        </div>
+
+        <h2 class="home-section-title">Esplora nuovi rifugi</h2>
+        <div class="rifugi-scroll">
+            {% for rifugio in rifugi_casuali %}
+            <a href="{% url 'rifugio' rifugio.pk %}" class="rifugio-card-big">
+                {% if rifugio.immagine %}<img src="{{ rifugio.immagine.url }}" alt="{{ rifugio.nome }}">
+                {% else %}<div class="rifugio-card-placeholder"></div>{% endif %}
+                <div class="rifugio-card-overlay"></div>
+                <div class="rifugio-card-content">
+                    <h3>{{ rifugio.nome }}</h3>
+                    <div class="rifugio-card-meta">
+                        <span>{{ rifugio.altitudine }} m</span>
+                        <span>{{ rifugio.regione }}</span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <p style="color: var(--gray);">Nessun rifugio.</p>
+            {% endfor %}
+        </div>
+
+    <!-- ══ ESCURSIONISTA (e Admin) ══ -->
+    {% else %}
+
+        <div class="score-card">
+            <div class="score-card-text">
+                <h2>Il tuo punteggio</h2>
+                <p>Scopri come raggiungere i tuoi obiettivi!</p>
+                <a href="{% url 'passaporto' %}" class="btn-scopri">SCOPRI</a>
+            </div>
+            <div class="score-ring">
+                <svg viewBox="0 0 80 80" width="90" height="90">
+                    <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="7"/>
+                    <circle cx="40" cy="40" r="32" fill="none" stroke="white" stroke-width="7"
+                        stroke-dasharray="201" stroke-dashoffset="140"
+                        stroke-linecap="round" transform="rotate(-90 40 40)"/>
+                </svg>
+                <span class="score-percent">30%</span>
+            </div>
+        </div>
+
+        <h2 class="home-section-title">Rifugi Preferiti</h2>
+        <div class="rifugi-scroll">
+            {% for rifugio in rifugi_preferiti %}
+            <a href="{% url 'rifugio' rifugio.pk %}" class="rifugio-card-big">
+                {% if rifugio.immagine %}<img src="{{ rifugio.immagine.url }}" alt="{{ rifugio.nome }}">
+                {% else %}<div class="rifugio-card-placeholder"></div>{% endif %}
+                <div class="rifugio-card-overlay"></div>
+                <div class="rifugio-card-content">
+                    <h3>{{ rifugio.nome }}</h3>
+                    <div class="rifugio-card-meta">
+                        <span>{{ rifugio.altitudine }} m</span>
+                        <span>{{ rifugio.regione }}</span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <p style="color: var(--gray); padding: 1rem 0;">Nessun preferito ancora.</p>
+            {% endfor %}
+        </div>
+
+        <h2 class="home-section-title">Rifugi Mensili</h2>
+        <div class="rifugi-scroll">
+            {% for rifugio in rifugi_mensili %}
+            <a href="{% url 'rifugio' rifugio.pk %}" class="rifugio-card-big">
+                {% if rifugio.immagine %}<img src="{{ rifugio.immagine.url }}" alt="{{ rifugio.nome }}">
+                {% else %}<div class="rifugio-card-placeholder"></div>{% endif %}
+                <div class="rifugio-card-overlay"></div>
+                <div class="rifugio-card-content">
+                    <h3>{{ rifugio.nome }}</h3>
+                    <div class="rifugio-card-meta">
+                        <span>{{ rifugio.altitudine }} m</span>
+                        <span>{{ rifugio.regione }}</span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <p style="color: var(--gray); padding: 1rem 0;">Nessun rifugio.</p>
+            {% endfor %}
+        </div>
+
+        <h2 class="home-section-title">Esplora nuovi rifugi</h2>
+        <div class="rifugi-scroll">
+            {% for rifugio in rifugi_casuali %}
+            <a href="{% url 'rifugio' rifugio.pk %}" class="rifugio-card-big">
+                {% if rifugio.immagine %}<img src="{{ rifugio.immagine.url }}" alt="{{ rifugio.nome }}">
+                {% else %}<div class="rifugio-card-placeholder"></div>{% endif %}
+                <div class="rifugio-card-overlay"></div>
+                <div class="rifugio-card-content">
+                    <h3>{{ rifugio.nome }}</h3>
+                    <div class="rifugio-card-meta">
+                        <span>{{ rifugio.altitudine }} m</span>
+                        <span>{{ rifugio.regione }}</span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <p style="color: var(--gray); padding: 1rem 0;">Nessun rifugio.</p>
+            {% endfor %}
+        </div>
+
+        <div class="pagination">
+            {% if rifugi.has_previous %}
+                <a href="?page={{ rifugi.previous_page_number }}&nome={{ nome }}&regione={{ regione }}&quota_min={{ quota_min }}&quota_max={{ quota_max }}">← Precedente</a>
+            {% endif %}
+            {% if rifugi %}<span>Pagina {{ rifugi.number }} di {{ rifugi.paginator.num_pages }}</span>{% endif %}
+            {% if rifugi.has_next %}
+                <a href="?page={{ rifugi.next_page_number }}&nome={{ nome }}&regione={{ regione }}&quota_min={{ quota_min }}&quota_max={{ quota_max }}">Successiva →</a>
+            {% endif %}
+        </div>
+
+    {% endif %}
 
 {% else %}
-    <!-- HERO -->
     <div class="hero">
         <h1>Esplora i rifugi di montagna</h1>
         <p>Timbra i rifugi, colleziona punti e scopri nuove vette!</p>

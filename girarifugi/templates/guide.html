@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}Trova la tua Guida — GiraRifugi{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h2>Trova la tua Guida</h2>
+    <p>Esplora gli itinerari organizzati dalle nostre guide alpine</p>
+</div>
+
+<!-- FILTRI -->
+<div class="search-bar" style="margin-bottom:1.5rem;">
+    <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap; width:100%;">
+        <input type="text" name="q" placeholder="Cerca itinerario..." value="{{ q }}">
+        <select name="difficolta">
+            <option value="">Tutte le difficoltà</option>
+            <option value="facile" {% if difficolta == 'facile' %}selected{% endif %}>Facile</option>
+            <option value="medio" {% if difficolta == 'medio' %}selected{% endif %}>Medio</option>
+            <option value="difficile" {% if difficolta == 'difficile' %}selected{% endif %}>Difficile</option>
+            <option value="esperto" {% if difficolta == 'esperto' %}selected{% endif %}>Esperto</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Cerca</button>
+        {% if q or difficolta %}
+        <a href="{% url 'guide' %}" class="btn btn-outline">Azzera</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if itinerari %}
+<div class="eventi-grid">
+    {% for it in itinerari %}
+    <div class="evento-card">
+        <div class="evento-card-placeholder" style="background: linear-gradient(135deg, var(--green) 0%, var(--blue-dark) 100%); display:flex; align-items:center; justify-content:center;">
+            <span class="material-icons" style="font-size:3rem; color:rgba(255,255,255,0.4);">hiking</span>
+        </div>
+        <div class="evento-card-body">
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.6rem;">
+                <span class="evento-data-badge">
+                    <span class="material-icons">event</span>
+                    {{ it.data|date:"d M Y" }}{% if it.ora %} — {{ it.ora|time:"H:i" }}{% endif %}
+                </span>
+                <span class="badge 
+                    {% if it.difficolta == 'facile' %}badge-green
+                    {% elif it.difficolta == 'medio' %}badge-blue
+                    {% elif it.difficolta == 'difficile' %}badge-gray
+                    {% else %}badge-red{% endif %}">
+                    {{ it.get_difficolta_display }}
+                </span>
+            </div>
+            <h3>{{ it.titolo }}</h3>
+            <p class="evento-rifugio">
+                <span class="material-icons">person</span>
+                Guida: {{ it.guida.username }}
+            </p>
+            {% if it.descrizione %}
+            <p class="evento-descrizione">{{ it.descrizione|truncatewords:20 }}</p>
+            {% endif %}
+            <div class="evento-footer">
+                <span class="badge {% if it.posti_disponibili > 0 %}badge-green{% else %}badge-red{% endif %}">
+                    {% if it.posti_disponibili > 0 %}
+                        {{ it.posti_disponibili }} posti
+                    {% else %}
+                        Sold out
+                    {% endif %}
+                </span>
+                {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
+                    {% if it.pk in iscrizioni_utente %}
+                    <span class="badge badge-green">
+                        <span class="material-icons" style="font-size:0.85rem; vertical-align:middle;">check</span>
+                        Iscritto
+                    </span>
+                    {% elif it.posti_disponibili > 0 %}
+                    <form method="post" action="{% url 'iscriviti_itinerario' it.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary btn-sm">Iscriviti</button>
+                    </form>
+                    {% endif %}
+                {% elif not user.is_authenticated %}
+                <a href="/accounts/login/" class="btn btn-outline btn-sm">Accedi per iscriverti</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <span class="material-icons">hiking</span>
+    <p>Nessun itinerario disponibile al momento.</p>
+</div>
+{% endif %}
+
+{% endblock %}

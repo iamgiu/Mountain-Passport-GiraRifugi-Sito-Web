@@ -5,8 +5,12 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('register/', views.register, name='register'),
     path('rifugi/<int:pk>/', views.rifugio, name='rifugio'),
+    path('eventi/', views.eventi, name='eventi'),
     path('passaporto/', views.passaporto, name='passaporto'),
     path('gestore/', views.dashboard_gestore, name='dashboard_gestore'),
     path('admin-panel/', views.pannello_admin, name='pannello_admin'),
     path('rifugi/<int:pk>/prenota/', views.prenota, name='prenota'),
+    path('guida/', views.dashboard_guida, name='dashboard_guida'),
+    path('guide/', views.guide, name='guide'),
+    path('itinerari/<int:pk>/iscriviti/', views.iscriviti_itinerario, name='iscriviti_itinerario'),
 ]

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Scopri gli eventi — GiraRifugi{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h2>Scopri gli eventi</h2>
+    <p>Serate, cene e attività organizzate dai rifugi</p>
+</div>
+
+<!-- FILTRI -->
+<div class="search-bar" style="margin-bottom:1.5rem;">
+    <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap; width:100%;">
+        <input type="text" name="q" placeholder="Cerca evento..." value="{{ q }}">
+        <input type="text" name="regione" placeholder="Regione" value="{{ regione }}">
+        <input type="date" name="dal" value="{{ dal }}">
+        <button type="submit" class="btn btn-primary">Cerca</button>
+        {% if q or regione or dal %}
+        <a href="{% url 'eventi' %}" class="btn btn-outline">Azzera</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if eventi %}
+<div class="eventi-grid">
+    {% for evento in eventi %}
+    <div class="evento-card">
+        {% if evento.rifugio.immagine %}
+            <img src="{{ evento.rifugio.immagine.url }}" alt="{{ evento.titolo }}">
+        {% else %}
+            <div class="evento-card-placeholder"></div>
+        {% endif %}
+        <div class="evento-card-body">
+            <div class="evento-data-badge">
+                <span class="material-icons">event</span>
+                {{ evento.data|date:"d M Y" }}{% if evento.ora %} — {{ evento.ora|time:"H:i" }}{% endif %}
+            </div>
+            <h3>{{ evento.titolo }}</h3>
+            <p class="evento-rifugio">
+                <span class="material-icons">home</span>
+                {{ evento.rifugio.nome }} — {{ evento.rifugio.regione }}
+            </p>
+            {% if evento.descrizione %}
+            <p class="evento-descrizione">{{ evento.descrizione|truncatewords:20 }}</p>
+            {% endif %}
+            <div class="evento-footer">
+                <span class="badge {% if evento.posti_disponibili > 0 %}badge-green{% else %}badge-red{% endif %}">
+                    {% if evento.posti_disponibili > 0 %}
+                        {{ evento.posti_disponibili }} posti disponibili
+                    {% else %}
+                        Sold out
+                    {% endif %}
+                </span>
+                <a href="{% url 'rifugio' evento.rifugio.pk %}" class="btn btn-outline btn-sm">Vai al rifugio</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <span class="material-icons">event_busy</span>
+    <p>Nessun evento trovato.</p>
+</div>
+{% endif %}
+
+{% endblock %}

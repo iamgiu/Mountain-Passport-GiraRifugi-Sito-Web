@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Guida — GiraRifugi{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h2>Dashboard Guida Alpina</h2>
+    <p>Gestisci i tuoi itinerari e le iscrizioni</p>
+</div>
+
+<!-- ══ I MIEI ITINERARI ══ -->
+<h2 class="section-title">I miei itinerari</h2>
+
+{% for it in itinerari %}
+<div class="card" style="display:block; margin-bottom:1rem;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.75rem;">
+        <div>
+            <h3>{{ it.titolo }}</h3>
+            <p>{{ it.data }}{% if it.ora %} alle {{ it.ora|time:"H:i" }}{% endif %} — 
+               <span class="badge badge-blue">{{ it.get_difficolta_display }}</span>
+            </p>
+            <p>{{ it.posti_disponibili }} posti disponibili</p>
+            {% if it.descrizione %}<p style="margin-top:0.3rem;">{{ it.descrizione|truncatewords:15 }}</p>{% endif %}
+        </div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <details class="modifica-details">
+                <summary class="btn btn-outline btn-sm">Modifica</summary>
+                <form method="post" style="margin-top:0.75rem; min-width:300px;">
+                    {% csrf_token %}
+                    <input type="hidden" name="azione" value="modifica_itinerario">
+                    <input type="hidden" name="itinerario_pk" value="{{ it.pk }}">
+                    <div class="form-group">
+                        <label>Titolo</label>
+                        <input type="text" name="titolo" value="{{ it.titolo }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Descrizione</label>
+                        <textarea name="descrizione" rows="2">{{ it.descrizione }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Data</label>
+                        <input type="date" name="data" value="{{ it.data|date:'Y-m-d' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Ora</label>
+                        <input type="time" name="ora" value="{{ it.ora }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Difficoltà</label>
+                        <select name="difficolta">
+                            <option value="facile" {% if it.difficolta == 'facile' %}selected{% endif %}>Facile</option>
+                            <option value="medio" {% if it.difficolta == 'medio' %}selected{% endif %}>Medio</option>
+                            <option value="difficile" {% if it.difficolta == 'difficile' %}selected{% endif %}>Difficile</option>
+                            <option value="esperto" {% if it.difficolta == 'esperto' %}selected{% endif %}>Esperto</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Posti disponibili</label>
+                        <input type="number" name="posti_disponibili" value="{{ it.posti_disponibili }}" min="0">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Salva</button>
+                </form>
+            </details>
+            <form method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="azione" value="elimina_itinerario">
+                <input type="hidden" name="itinerario_pk" value="{{ it.pk }}">
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Eliminare questo itinerario?')">Elimina</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ISCRITTI -->
+    <div style="margin-top:1rem; border-top:1px solid var(--gray-light); padding-top:0.75rem;">
+        <p style="font-size:0.85rem; font-weight:600; color:var(--blue-dark); margin-bottom:0.5rem;">
+            Iscritti ({{ it.iscrizioni.count }})
+        </p>
+        {% if it.iscrizioni.all %}
+        <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+            {% for iscr in it.iscrizioni.all %}
+            <span class="badge badge-green">
+                <span class="material-icons" style="font-size:0.8rem; vertical-align:middle;">person</span>
+                {{ iscr.escursionista.username }}
+            </span>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="font-size:0.82rem; color:var(--gray);">Nessun iscritto ancora.</p>
+        {% endif %}
+    </div>
+</div>
+{% empty %}
+<div class="empty-state">
+    <span class="material-icons">hiking</span>
+    <p>Nessun itinerario ancora. Creane uno qui sotto!</p>
+</div>
+{% endfor %}
+
+<!-- ══ CREA ITINERARIO ══ -->
+<h2 class="section-title">Crea nuovo itinerario</h2>
+<div class="card" style="display:block;">
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="azione" value="crea_itinerario">
+        <div class="prenota-grid">
+            <div class="form-group">
+                <label>Titolo</label>
+                <input type="text" name="titolo" required>
+            </div>
+            <div class="form-group">
+                <label>Data</label>
+                <input type="date" name="data" required>
+            </div>
+            <div class="form-group">
+                <label>Ora</label>
+                <input type="time" name="ora">
+            </div>
+            <div class="form-group">
+                <label>Difficoltà</label>
+                <select name="difficolta">
+                    <option value="facile">Facile</option>
+                    <option value="medio">Medio</option>
+                    <option value="difficile">Difficile</option>
+                    <option value="esperto">Esperto</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Posti disponibili</label>
+                <input type="number" name="posti_disponibili" value="10" min="1">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Descrizione</label>
+            <textarea name="descrizione" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Crea itinerario</button>
+    </form>
+</div>
+
+{% endblock %}

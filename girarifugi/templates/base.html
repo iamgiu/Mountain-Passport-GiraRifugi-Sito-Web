@@ -6,9 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}GiraRifugi{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
-    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">  
+    <link rel="stylesheet" href="{% static 'css/eventi.css' %}">
     <link rel="stylesheet" href="{% static 'css/detail.css' %}">
-    <link rel="stylesheet" href="{% static 'css/forms.css' %}">
+    <link rel="stylesheet" href="{% static 'css/form.css' %}">
     <link rel="stylesheet" href="{% static 'css/pages.css' %}">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
@@ -19,14 +20,16 @@
  
     <ul class="navbar-nav">
         <li><a href="{% url 'home' %}">Home</a></li>
-        <li><a href="#">Trova la tua Guida</a></li>
-        <li><a href="#">Scopri gli eventi</a></li>
+        <li><a href="{% url 'guide' %}">Trova la tua Guida</a></li>
+        <li><a href="{% url 'eventi' %}">Scopri gli eventi</a></li>
  
         {% if user.is_authenticated %}
             {% if user.groups.all.0.name == 'Escursionista' %}
                 <li><a href="{% url 'passaporto' %}">Passaporto</a></li>
             {% elif user.groups.all.0.name == 'GestoreRifugio' %}
                 <li><a href="{% url 'dashboard_gestore' %}">Dashboard</a></li>
+            {% elif user.groups.all.0.name == 'GuidaAlpina' %}
+                <li><a href="{% url 'dashboard_guida' %}">Dashboard</a></li>         
             {% elif user.groups.all.0.name == 'Admin' or user.is_superuser %}
                 <li><a href="{% url 'pannello_admin' %}">Pannello Admin</a></li>
             {% endif %}

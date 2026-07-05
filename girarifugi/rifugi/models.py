@@ -122,6 +122,54 @@ class Prenotazione(models.Model):
 
     def __str__(self):
         return f"{self.escursionista.username} - {self.rifugio.nome} ({self.stato}) "
+    
+class Itinerario(models.Model):
+        
+    guida = models.ForeignKey(
+            User,
+            on_delete=models.CASCADE,
+            related_name='itinerari'
+        )
+    
+    titolo = models.CharField(max_length=200)
+    descrizione = models.TextField(blank=True)
+    rifugi = models.ManyToManyField(Rifugio, related_name='itinerari', blank=True)
+    data = models.DateField()
+    ora = models.TimeField(blank=True, null=True)
+    difficolta = models.CharField(max_length=20, choices=[
+        ('facile', 'Facile'),
+        ('medio', 'Medio'),
+        ('difficile', 'Difficile'),
+        ('esperto', 'Esperto'),
+    ], default='facile')
+    posti_disponibili = models.IntegerField(default=0)
+
+    class Meta:
+        verbose_name_plural = "Itinerari"
+        ordering = ['data']
+
+    def __str__(self):
+        return f"{self.titolo} — {self.guida.username} ({self.data})"
+
+class IscrizioneItinerario(models.Model):
+    escursionista = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='iscrizioni_itinerari'
+    )
+    itinerario = models.ForeignKey(
+        Itinerario,
+        on_delete=models.CASCADE,
+        related_name='iscrizioni'
+    )
+    data_iscrizione = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = "Iscrizioni Itinerari"
+        unique_together = ('escursionista', 'itinerario')
+
+    def __str__(self):
+        return f"{self.escursionista.username} — {self.itinerario.titolo}"
 
 class Recensione(models.Model):
 
@@ -166,12 +214,26 @@ class Preferito(models.Model):
         on_delete=models.CASCADE,
         related_name='preferiti'
     )
-
-    data = models.DateTimeField(auto_now_add=True)
     
+class Evento(models.Model):
+    rifugio = models.ForeignKey(
+        Rifugio,
+        on_delete=models.CASCADE,
+        related_name='eventi'
+    )
+    titolo = models.CharField(max_length=200)
+    descrizione = models.TextField(blank=True)
+    data = models.DateField()
+    ora = models.TimeField(blank=True, null=True)
+    posti_disponibili = models.IntegerField(default=0)
+
     class Meta:
-        verbose_name_plural = "Preferiti"
-        unique_together = ('escursionista', 'rifugio')
+        verbose_name_plural = "Eventi"
+        ordering = ['data']
+
+    def __str__(self):
+        return f"{self.titolo} — {self.rifugio.nome} ({self.data})"
 
     def __str__(self):
         return f"{self.escursionita.username} - {self.rifugio.nome}"
+        
