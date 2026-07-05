@@ -111,3 +111,20 @@
   .detail-stats { grid-template-columns: repeat(2, 1fr); }
   .detail-hero { height: 220px; }
 }
+
+.prenota-stato {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+}
+.prenota-stato p { font-weight: 600; color: var(--blue-dark); margin-bottom: 0.2rem; }
+.prenota-stato span:last-child { font-size: 0.8rem; color: var(--gray); }
+.prenota-stato.attesa { background: #fff3cd; }
+.prenota-stato.attesa .material-icons { color: #856404; font-size: 2rem; }
+.prenota-stato.approvata { background: var(--green-bg); }
+.prenota-stato.approvata .material-icons { color: var(--green-dark); font-size: 2rem; }
+.prenota-stato.rifiutata { background: #fde8e8; }
+.prenota-stato.rifiutata .material-icons { color: #c0392b; font-size: 2rem; }

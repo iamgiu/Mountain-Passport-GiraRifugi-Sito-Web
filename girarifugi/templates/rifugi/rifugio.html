@@ -84,6 +84,62 @@
         </ul>
     </div>
 
+    <!-- FORM PRENOTAZIONE -->
+    {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
+    <div class="detail-section" id="prenota">
+        <h2>Prenotazione</h2>
+        {% if prenotazione %}
+            {% if prenotazione.stato == 'in_attesa' %}
+            <div class="prenota-stato attesa">
+                <span class="material-icons">hourglass_top</span>
+                <div>
+                    <p>Il gestore sta verificando la tua richiesta</p>
+                    <span>{{ prenotazione.data_arrivo }} → {{ prenotazione.data_partenza }}</span>
+                </div>
+            </div>
+            {% elif prenotazione.stato == 'approvata' %}
+            <div class="prenota-stato approvata">
+                <span class="material-icons">check_circle</span>
+                <div>
+                    <p>Prenotazione approvata!</p>
+                    <span>{{ prenotazione.data_arrivo }} → {{ prenotazione.data_partenza }} · {{ prenotazione.num_ospiti }} ospiti</span>
+                </div>
+            </div>
+            {% elif prenotazione.stato == 'rifiutata' %}
+            <div class="prenota-stato rifiutata">
+                <span class="material-icons">cancel</span>
+                <div>
+                    <p>Prenotazione rifiutata</p>
+                    <span>Puoi inviare una nuova richiesta</span>
+                </div>
+            </div>
+            {% endif %}
+        {% else %}
+        <form method="post" action="{% url 'prenota' rifugio.pk %}">
+            {% csrf_token %}
+            <div class="prenota-grid">
+                <div class="form-group">
+                    <label>Data arrivo</label>
+                    <input type="date" name="data_arrivo" required>
+                </div>
+                <div class="form-group">
+                    <label>Data partenza</label>
+                    <input type="date" name="data_partenza" required>
+                </div>
+                <div class="form-group">
+                    <label>Numero ospiti</label>
+                    <input type="number" name="num_ospiti" min="1" max="{{ rifugio.posti_disponibili }}" value="1" required>
+                </div>
+            </div>
+            <p style="font-size:0.82rem; color:var(--gray); margin-bottom:0.75rem;">
+                Posti disponibili: <strong>{{ rifugio.posti_disponibili }}</strong>
+            </p>
+            <button type="submit" class="btn btn-primary">Invia prenotazione</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <!-- RECENSIONI -->
     <div class="detail-section">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.9rem;">
@@ -125,39 +181,6 @@
         {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
         {% endif %}
     </div>
-
-    <!-- FORM PRENOTAZIONE -->
-    {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
-    <div class="detail-section" id="prenota">
-        <h2>Prenota</h2>
-        <form method="post" action="{% url 'prenota' rifugio.pk %}">
-            {% csrf_token %}
-            <div class="prenota-grid">
-                <div class="form-group">
-                    <label>Data arrivo</label>
-                    <input type="date" name="data_arrivo" required>
-                </div>
-                <div class="form-group">
-                    <label>Data partenza</label>
-                    <input type="date" name="data_partenza" required>
-                </div>
-                <div class="form-group">
-                    <label>Numero ospiti</label>
-                    <input type="number" name="num_ospiti" min="1" max="{{ rifugio.posti_disponibili }}" value="1" required>
-                </div>
-            </div>
-            <p style="font-size:0.82rem; color:var(--gray); margin-bottom:0.75rem;">
-                Posti disponibili: <strong>{{ rifugio.posti_disponibili }}</strong>
-            </p>
-            <button type="submit" class="btn btn-primary">Invia prenotazione</button>
-        </form>
-    </div>
-    {% endif %}
-
-    <a href="{% url 'home' %}" class="btn btn-outline btn-sm" style="margin-top:0.5rem; display:inline-flex; align-items:center; gap:0.4rem;">
-        <span class="material-icons" style="font-size:1rem;">arrow_back</span>
-        Torna alla home
-    </a>
 
 </div>
 {% endblock %}

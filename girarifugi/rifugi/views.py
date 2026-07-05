@@ -92,8 +92,20 @@ def home(request):
     })
 
 def rifugio(request, pk):
-    r = Rifugio.objects.get(pk=pk)
-    return render(request, 'rifugi/rifugio.html', {'rifugio': r})
+    r = get_object_or_404(Rifugio, pk=pk)
+    recensioni = Recensione.objects.filter(rifugio=r).select_related('escursionista').order_by('-data')
+    
+    prenotazione = None
+    if request.user.is_authenticated:
+        prenotazione = Prenotazione.objects.filter(
+            escursionista=request.user, rifugio=r
+        ).first()
+
+    return render(request, 'rifugi/rifugio.html', {
+        'rifugio': r,
+        'recensioni': recensioni,
+        'prenotazione': prenotazione,
+    })
 
 def leaderboard(request):
     from django.contrib.auth.models import User

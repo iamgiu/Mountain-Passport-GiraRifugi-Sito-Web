@@ -19,8 +19,8 @@
  
     <ul class="navbar-nav">
         <li><a href="{% url 'home' %}">Home</a></li>
-        <li><a href="#">Mappa</a></li>
-        <li><a href="{% url 'leaderboard' %}">Leaderboard</a></li>
+        <li><a href="#">Trova la tua Guida</a></li>
+        <li><a href="#">Scopri gli eventi</a></li>
  
         {% if user.is_authenticated %}
             {% if user.groups.all.0.name == 'Escursionista' %}
