@@ -92,6 +92,10 @@ def home(request):
             regione = request.GET.get('regione', '')
             quota_min = request.GET.get('quota_min', '')
             quota_max = request.GET.get('quota_max', '')
+            visite = Visita.objects.filter(escursionista=request.user).select_related('rifugio')
+            punti_totali = sum(v.rifugio.altitudine for v in visite)
+            percentuale = min(100, int((punti_totali / 50000) * 100))
+            stroke_offset = int(201 - (201 * percentuale / 100))
             if nome: rifugi = rifugi.filter(nome__icontains=nome)
             if regione: rifugi = rifugi.filter(regione__icontains=regione)
             if quota_min: rifugi = rifugi.filter(altitudine__gte=quota_min)
@@ -160,6 +164,9 @@ def home(request):
         'gestori': gestori,
         'nome': nome, 'regione': regione,
         'quota_min': quota_min, 'quota_max': quota_max,
+        'punti_totali': punti_totali,
+        'percentuale': percentuale,
+        'stroke_offset': stroke_offset,
     })
 
 def rifugio(request, pk):
@@ -237,6 +244,31 @@ def eventi(request):
         'q': q, 'regione': regione, 'dal': dal,
     })
 
+def checkin(request, uuid):
+    rifugio = get_object_or_404(Rifugio, qr_uuid=uuid)
+    
+    if not request.user.is_authenticated:
+        return redirect(f'/accounts/login/?next=/checkin/{uuid}/')
+    
+    if not request.user.groups.filter(name='Escursionista').exists():
+        messages.error(request, 'Solo gli escursionisti possono fare il check-in.')
+        return redirect('rifugio', pk=rifugio.pk)
+
+    # Controlla se ha già visitato
+    visita, created = Visita.objects.get_or_create(
+        escursionista=request.user,
+        rifugio=rifugio
+    )
+
+    if created:
+        # Prima visita — crea il timbro
+        Timbro.objects.create(visita=visita)
+        messages.success(request, f'Check-in effettuato! Hai guadagnato {rifugio.altitudine} punti!')
+    else:
+        messages.info(request, f'Hai già visitato {rifugio.nome}!')
+
+    return redirect('rifugio', pk=rifugio.pk)
+
 # ─── VISTE RISTRETTE ──────────────────────────────────────────────────────────
 
 @gruppo_richiesto('Escursionista')
@@ -269,9 +301,19 @@ def passaporto(request):
     })
 
 @gruppo_richiesto('Escursionista')
-def preferiti(request):
-    preferiti = Preferito.objects.filter(escursionista=request.user).select_related('rifugio')
-    return render(request, 'rifugi/preferiti.html', {'preferiti': preferiti})
+def toggle_preferito(request, pk):
+    rifugio = get_object_or_404(Rifugio, pk=pk)
+    if request.method == 'POST':
+        preferito, created = Preferito.objects.get_or_create(
+            escursionista=request.user,
+            rifugio=rifugio
+        )
+        if not created:
+            preferito.delete()
+            messages.info(request, f'{rifugio.nome} rimosso dai preferiti.')
+        else:
+            messages.success(request, f'{rifugio.nome} aggiunto ai preferiti!')
+    return redirect('rifugio', pk=pk)
 
 @gruppo_richiesto('Escursionista')
 def prenota(request, pk):
@@ -295,6 +337,40 @@ def prenota(request, pk):
         except Exception as e:
             messages.error(request, f'Errore: {e}')
     return redirect('rifugio', pk=pk)
+
+@gruppo_richiesto('Escursionista')
+def checkin(request):
+    if request.method == 'POST':
+        codice = request.POST.get('codice', '').strip().lower()
+        try:
+            # Cerca il rifugio il cui UUID inizia con il codice inserito
+            rifugi = Rifugio.objects.filter(stato='approvato')
+            rifugio = None
+            for r in rifugi:
+                if str(r.qr_uuid).replace('-', '')[:8].upper() == codice.upper():
+                    rifugio = r
+                    break
+            
+            if not rifugio:
+                messages.error(request, 'Codice non valido.')
+                return redirect('checkin')
+
+            visita, created = Visita.objects.get_or_create(
+                escursionista=request.user,
+                rifugio=rifugio
+            )
+            if created:
+                Timbro.objects.create(visita=visita)
+                messages.success(request, f'Check-in effettuato al {rifugio.nome}! +{rifugio.altitudine} punti!')
+            else:
+                messages.info(request, f'Hai già il timbro per {rifugio.nome}!')
+
+        except Exception as e:
+            messages.error(request, f'Errore: {e}')
+        
+        return redirect('passaporto')
+
+    return render(request, 'checkin.html')
 
 @gruppo_richiesto('GestoreRifugio')
 def dashboard_gestore(request):
@@ -335,6 +411,9 @@ def dashboard_gestore(request):
             p = get_object_or_404(Prenotazione, pk=pk, rifugio__gestore=request.user)
             p.stato = 'approvata'
             p.save()
+            # Scala i posti disponibili
+            p.rifugio.posti_disponibili = max(0, p.rifugio.posti_disponibili - p.num_ospiti)
+            p.rifugio.save()
             messages.success(request, 'Prenotazione approvata!')
 
         elif azione == 'rifiuta_prenotazione':

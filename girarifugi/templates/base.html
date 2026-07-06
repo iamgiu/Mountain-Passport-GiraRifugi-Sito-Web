@@ -22,9 +22,10 @@
         <li><a href="{% url 'home' %}">Home</a></li>
         <li><a href="{% url 'guide' %}">Trova la tua Guida</a></li>
         <li><a href="{% url 'eventi' %}">Scopri gli eventi</a></li>
- 
+
         {% if user.is_authenticated %}
             {% if user.groups.all.0.name == 'Escursionista' %}
+                <li><a href="{% url 'checkin' %}">Check-in</a></li>
                 <li><a href="{% url 'passaporto' %}">Passaporto</a></li>
             {% elif user.groups.all.0.name == 'GestoreRifugio' %}
                 <li><a href="{% url 'dashboard_gestore' %}">Dashboard</a></li>

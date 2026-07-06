@@ -21,10 +21,10 @@
         <h1>{{ rifugio.nome }}</h1>
         {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
         <div style="display:flex; gap:0.5rem;">
-            <a href="#prenota" class="btn-preferito btn-prenota" title="Prenota">
-                <span class="material-icons">calendar_today</span>
+            <a href="{% url 'checkin' %}" class="btn-preferito btn-prenota" title="Check-in">
+                <span class="material-icons">qr_code_scanner</span>
             </a>
-            <form method="post" action="#">
+            <form method="post" action="{% url 'toggle_preferito' rifugio.pk %}">
                 {% csrf_token %}
                 <button type="submit" class="btn-preferito" title="Salva nei preferiti">
                     <span class="material-icons">bookmark</span>
@@ -32,7 +32,14 @@
             </form>
         </div>
         {% endif %}
+        {% if user.is_authenticated and user.groups.all.0.name == 'GestoreRifugio' and rifugio.gestore == user %}
+        <div style="background:var(--green-bg); border-radius:var(--radius-sm); padding:0.5rem 1rem; display:flex; align-items:center; gap:0.75rem;">
+            <span class="material-icons" style="color:var(--green-dark); font-size:1.2rem;">qr_code</span>
+            <span style="font-size:1.1rem; font-weight:700; letter-spacing:3px; color:var(--blue-dark);">{{ rifugio.qr_uuid|stringformat:"s"|slice:":8"|upper }}</span>
+        </div>
+        {% endif %}
     </div>
+
 
     <!-- PUNTI -->
     <p class="detail-punti">+{{ rifugio.altitudine|floatformat:0 }} punti</p>

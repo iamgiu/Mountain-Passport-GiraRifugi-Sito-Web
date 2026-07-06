@@ -250,17 +250,17 @@
     <div class="score-card">
         <div class="score-card-text">
             <h2>Il tuo punteggio</h2>
-            <p>Scopri come raggiungere i tuoi obiettivi!</p>
+            <p>{{ punti_totali }} / 50.000 punti</p>
             <a href="{% url 'passaporto' %}" class="btn-scopri">SCOPRI</a>
         </div>
         <div class="score-ring">
             <svg viewBox="0 0 80 80" width="90" height="90">
                 <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="7"/>
                 <circle cx="40" cy="40" r="32" fill="none" stroke="white" stroke-width="7"
-                    stroke-dasharray="201" stroke-dashoffset="140"
+                    stroke-dasharray="201" stroke-dashoffset="{{ stroke_offset }}"
                     stroke-linecap="round" transform="rotate(-90 40 40)"/>
             </svg>
-            <span class="score-percent">30%</span>
+            <span class="score-percent">{{ percentuale }}%</span>
         </div>
     </div>
 

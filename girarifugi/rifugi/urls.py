@@ -13,4 +13,6 @@ urlpatterns = [
     path('guida/', views.dashboard_guida, name='dashboard_guida'),
     path('guide/', views.guide, name='guide'),
     path('itinerari/<int:pk>/iscriviti/', views.iscriviti_itinerario, name='iscriviti_itinerario'),
+    path('checkin/', views.checkin, name='checkin'),
+    path('rifugi/<int:pk>/preferito/', views.toggle_preferito, name='toggle_preferito'),
 ]
