@@ -62,16 +62,23 @@ def register(request):
     return render(request, 'registration/register.html', {'form': form})
 
 def home(request):
-    # Dati per Escursionista
-    rifugi_preferiti = []
-    rifugi_mensili = []
-    rifugi_casuali = []
-    rifugi_paginati = None
-    nome = regione = quota_min = quota_max = ''
+    from django.contrib.auth.models import User as AuthUser
 
-    # Dati per GestoreRifugio
+    # Variabili comuni sempre calcolate
+    rifugi_mensili = Rifugio.objects.filter(stato='approvato').order_by('-id')[:10]
+    rifugi_casuali = Rifugio.objects.filter(stato='approvato').order_by('?')[:10]
+    rifugi_in_attesa_count = Rifugio.objects.filter(stato='in_attesa').count()
+
+    # Variabili per ruolo
+    rifugi_preferiti = []
+    rifugi_paginati = None
     rifugi_gestore = []
     prenotazioni_in_attesa = 0
+    itinerari_guida = []
+    classifica_rapida = []
+    guide = []
+    gestori = []
+    nome = regione = quota_min = quota_max = ''
 
     if request.user.is_authenticated:
         gruppo = request.user.groups.first()
@@ -80,9 +87,6 @@ def home(request):
         if nome_gruppo == 'Escursionista':
             preferiti = Preferito.objects.filter(escursionista=request.user).select_related('rifugio')
             rifugi_preferiti = [p.rifugio for p in preferiti]
-            rifugi_mensili = Rifugio.objects.filter(stato='approvato').order_by('-id')[:10]
-            rifugi_casuali = Rifugio.objects.filter(stato='approvato').order_by('?')[:10]
-
             rifugi = Rifugio.objects.filter(stato='approvato')
             nome = request.GET.get('nome', '')
             regione = request.GET.get('regione', '')
@@ -92,7 +96,10 @@ def home(request):
             if regione: rifugi = rifugi.filter(regione__icontains=regione)
             if quota_min: rifugi = rifugi.filter(altitudine__gte=quota_min)
             if quota_max: rifugi = rifugi.filter(altitudine__lte=quota_max)
-            request.session['filtri'] = {'nome': nome, 'regione': regione, 'quota_min': quota_min, 'quota_max': quota_max}
+            request.session['filtri'] = {
+                'nome': nome, 'regione': regione,
+                'quota_min': quota_min, 'quota_max': quota_max
+            }
             paginator = Paginator(rifugi, 10)
             rifugi_paginati = paginator.get_page(request.GET.get('page'))
 
@@ -103,22 +110,56 @@ def home(request):
             ).count()
 
         elif nome_gruppo == 'GuidaAlpina':
-            rifugi_preferiti = Preferito.objects.filter(escursionista=request.user).select_related('rifugio')
-            rifugi_preferiti = [p.rifugio for p in rifugi_preferiti]
-            rifugi_mensili = Rifugio.objects.filter(stato='approvato').order_by('-id')[:10]
-            rifugi_casuali = Rifugio.objects.filter(stato='approvato').order_by('?')[:10]
+            preferiti = Preferito.objects.filter(escursionista=request.user).select_related('rifugio')
+            rifugi_preferiti = [p.rifugio for p in preferiti]
             itinerari_guida = Itinerario.objects.filter(guida=request.user).order_by('data')
+
+        elif nome_gruppo == 'Admin' or request.user.is_superuser:
+            # Leaderboard rapida top 5
+            escursionisti = AuthUser.objects.filter(groups__name='Escursionista')
+            for u in escursionisti:
+                visite = Visita.objects.filter(escursionista=u).select_related('rifugio')
+                punti = sum(v.rifugio.altitudine for v in visite)
+                classifica_rapida.append({
+                    'username': u.username,
+                    'punti': punti,
+                    'num_visite': visite.count()
+                })
+            classifica_rapida.sort(key=lambda x: x['punti'], reverse=True)
+            classifica_rapida = classifica_rapida[:5]
+
+            guide = AuthUser.objects.filter(groups__name='GuidaAlpina').prefetch_related('itinerari')
+            gestori = AuthUser.objects.filter(groups__name='GestoreRifugio').prefetch_related('rifugi')
+
+            # Crea nuovo utente
+            if request.method == 'POST' and request.POST.get('azione') == 'crea_utente':
+                username = request.POST.get('username')
+                password = request.POST.get('password')
+                ruolo = request.POST.get('ruolo')
+                if username and password and ruolo:
+                    if not AuthUser.objects.filter(username=username).exists():
+                        nuovo = AuthUser.objects.create_user(username=username, password=password)
+                        gruppo_obj = Group.objects.get(name=ruolo)
+                        nuovo.groups.add(gruppo_obj)
+                        messages.success(request, f'Utente {username} creato come {ruolo}!')
+                    else:
+                        messages.error(request, 'Username già esistente.')
+                return redirect('home')
 
     return render(request, 'home.html', {
         'rifugi': rifugi_paginati,
         'rifugi_preferiti': rifugi_preferiti,
         'rifugi_mensili': rifugi_mensili,
         'rifugi_casuali': rifugi_casuali,
-        'nome': nome, 'regione': regione,
-        'quota_min': quota_min, 'quota_max': quota_max,
         'rifugi_gestore': rifugi_gestore,
         'prenotazioni_in_attesa': prenotazioni_in_attesa,
-        'itinerari_guida': itinerari_guida if 'itinerari_guida' in locals() else [],
+        'itinerari_guida': itinerari_guida,
+        'rifugi_in_attesa_count': rifugi_in_attesa_count,
+        'classifica_rapida': classifica_rapida,
+        'guide': guide,
+        'gestori': gestori,
+        'nome': nome, 'regione': regione,
+        'quota_min': quota_min, 'quota_max': quota_max,
     })
 
 def rifugio(request, pk):
@@ -380,8 +421,47 @@ def dashboard_guida(request):
 
 @gruppo_richiesto('Admin')
 def pannello_admin(request):
-    rifugi_in_attesa = Rifugio.objects.filter(stato='in_attesa')
+    from django.contrib.auth.models import User
+
+    rifugi_in_attesa = Rifugio.objects.filter(stato='in_attesa').select_related('gestore')
+    rifugi_tutti = Rifugio.objects.filter(stato='approvato').order_by('-id')
+
+    escursionisti = User.objects.filter(groups__name='Escursionista')
+    classifica = []
+    for u in escursionisti:
+        visite = Visita.objects.filter(escursionista=u).select_related('rifugio')
+        punti = sum(v.rifugio.altitudine for v in visite)
+        classifica.append({
+            'username': u.username,
+            'email': u.email,
+            'punti': punti,
+            'num_visite': visite.count(),
+        })
+    classifica.sort(key=lambda x: x['punti'], reverse=True)
+
+    if request.method == 'POST':
+        azione = request.POST.get('azione')
+        pk = request.POST.get('rifugio_pk')
+        r = get_object_or_404(Rifugio, pk=pk)
+
+        if azione == 'approva':
+            r.stato = 'approvato'
+            r.save()
+            messages.success(request, f'{r.nome} approvato!')
+        elif azione == 'rifiuta':
+            r.delete()
+            messages.success(request, 'Rifugio rifiutato ed eliminato.')
+        elif azione == 'modifica_altitudine':
+            nuova = request.POST.get('altitudine')
+            if nuova:
+                r.altitudine = int(nuova)
+                r.save()
+                messages.success(request, f'Altitudine di {r.nome} aggiornata!')
+
+        return redirect('pannello_admin')
+
     return render(request, 'rifugi/pannello_admin.html', {
         'rifugi_in_attesa': rifugi_in_attesa,
+        'rifugi_tutti': rifugi_tutti,
     })
 

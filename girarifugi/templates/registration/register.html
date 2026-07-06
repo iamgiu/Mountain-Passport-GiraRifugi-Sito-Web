@@ -1,13 +1,29 @@
 {% extends 'base.html' %}
-
-{% block title %}Login — GiraRifugi{% endblock %}
+{% block title %}Registrati — GiraRifugi{% endblock %}
 
 {% block content %}
-    <h2>Accedi a GiraRifugi</h2>
+<div class="form-container">
+    <h2>Crea il tuo account</h2>
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Accedi</button>
+        {% for field in form %}
+        <div class="form-group">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.help_text %}
+            <p class="helptext">{{ field.help_text }}</p>
+            {% endif %}
+            {% if field.errors %}
+            <ul class="errorlist">
+                {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem;">Registrati</button>
     </form>
-    <a href="/register/">Non hai un account? Registrati</a>
+    <p style="text-align:center; margin-top:1rem; font-size:0.88rem; color:var(--gray);">
+        Hai già un account? <a href="/accounts/login/">Accedi</a>
+    </p>
+</div>
 {% endblock %}
