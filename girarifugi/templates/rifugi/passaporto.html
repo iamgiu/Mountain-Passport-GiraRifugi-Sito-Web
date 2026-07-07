@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
 {% block title %}Il mio Passaporto — GiraRifugi{% endblock %}
+{% load static %}
 
 {% block content %}
 
 <!-- HEADER PROFILO -->
 <div class="profilo-hero">
-    <div class="profilo-copertina"></div>
+    <div class="profilo-copertina" style="background-image: url('{% static 'banner.jpg' %}'); background-size:cover; background-position:center;"></div>
     <div class="profilo-avatar">
         <span class="material-icons">account_circle</span>
     </div>
@@ -13,6 +14,10 @@
 <div class="profilo-info">
     <h1>{{ user.first_name }} {{ user.last_name }}</h1>
     <p>{{ user.username }}</p>
+    <a href="{% url 'modifica_profilo' %}" class="btn btn-outline btn-sm" style="margin-top:0.75rem;">
+        <span class="material-icons" style="font-size:1rem; vertical-align:middle;">edit</span>
+        Modifica profilo
+    </a>
 </div>
 
 <!-- STATISTICHE -->

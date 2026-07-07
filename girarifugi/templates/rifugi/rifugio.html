@@ -138,9 +138,6 @@
                     <input type="number" name="num_ospiti" min="1" max="{{ rifugio.posti_disponibili }}" value="1" required>
                 </div>
             </div>
-            <p style="font-size:0.82rem; color:var(--gray); margin-bottom:0.75rem;">
-                Posti disponibili: <strong>{{ rifugio.posti_disponibili }}</strong>
-            </p>
             <button type="submit" class="btn btn-primary">Invia prenotazione</button>
         </form>
         {% endif %}
@@ -151,13 +148,14 @@
     <div class="detail-section">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.9rem;">
             <h2 style="margin-bottom:0;">Recensioni</h2>
-            {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
-            <a href="#" class="btn btn-outline btn-sm" style="display:inline-flex; align-items:center; gap:0.4rem;">
+            {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' and ha_timbro and not recensione_utente %}
+            <a href="#form-recensione" class="btn btn-outline btn-sm" style="display:inline-flex; align-items:center; gap:0.4rem;">
                 <span class="material-icons" style="font-size:1rem;">edit</span>
-                Scrivi recensione
+                Scrivi Recensione
             </a>
             {% endif %}
         </div>
+
         {% if recensioni %}
             {% for r in recensioni %}
             <div class="recensione-card">
@@ -185,9 +183,35 @@
             </div>
         {% endif %}
 
+        <!-- FORM RECENSIONE -->
         {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
+            {% if ha_timbro and not recensione_utente %}
+            <div id="form-recensione" class="card" style="display:block; margin-top:1rem;">
+                <form method="post" action="{% url 'scrivi_recensione' rifugio.pk %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label>Voto</label>
+                        <select name="voto">
+                           {% for i in "12345" %}
+                                <option value="{{ forloop.counter }}" {% if recensione_utente and recensione_utente.voto == forloop.counter %}selected{% endif %}>
+                                    {{ forloop.counter }} stell{{ forloop.counter|pluralize:"a,e" }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Testo</label>
+                        <textarea name="testo" rows="3">{% if recensione_utente %}{{ recensione_utente.testo }}{% endif %}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Salva recensione</button>
+                </form>
+            </div>
+            {% elif not recensione_utente %}
+            <p style="font-size:0.82rem; color:var(--gray); margin-top:0.75rem;">
+                Visita il rifugio per poter scrivere una recensione.
+            </p>
+            {% endif %}
         {% endif %}
     </div>
-
 </div>
 {% endblock %}

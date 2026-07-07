@@ -4,7 +4,8 @@ from django.contrib.auth.models import Group
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from datetime import date
+from datetime import date, timedelta
+from django.utils import timezone
 from django import forms
 from .models import Rifugio, Visita, Timbro, Prenotazione, Recensione, Preferito, Evento, Itinerario, IscrizioneItinerario
 
@@ -93,9 +94,6 @@ def home(request):
             quota_min = request.GET.get('quota_min', '')
             quota_max = request.GET.get('quota_max', '')
             visite = Visita.objects.filter(escursionista=request.user).select_related('rifugio')
-            punti_totali = sum(v.rifugio.altitudine for v in visite)
-            percentuale = min(100, int((punti_totali / 50000) * 100))
-            stroke_offset = int(201 - (201 * percentuale / 100))
             if nome: rifugi = rifugi.filter(nome__icontains=nome)
             if regione: rifugi = rifugi.filter(regione__icontains=regione)
             if quota_min: rifugi = rifugi.filter(altitudine__gte=quota_min)
@@ -164,9 +162,6 @@ def home(request):
         'gestori': gestori,
         'nome': nome, 'regione': regione,
         'quota_min': quota_min, 'quota_max': quota_max,
-        'punti_totali': punti_totali,
-        'percentuale': percentuale,
-        'stroke_offset': stroke_offset,
     })
 
 def rifugio(request, pk):
@@ -174,8 +169,17 @@ def rifugio(request, pk):
     recensioni = Recensione.objects.filter(rifugio=r).select_related('escursionista').order_by('-data')
     
     prenotazione = None
+    ha_timbro = False
+    recensione_utente = None
+    
     if request.user.is_authenticated:
         prenotazione = Prenotazione.objects.filter(
+            escursionista=request.user, rifugio=r
+        ).first()
+        ha_timbro = Visita.objects.filter(
+            escursionista=request.user, rifugio=r
+        ).exists()
+        recensione_utente = Recensione.objects.filter(
             escursionista=request.user, rifugio=r
         ).first()
 
@@ -183,6 +187,8 @@ def rifugio(request, pk):
         'rifugio': r,
         'recensioni': recensioni,
         'prenotazione': prenotazione,
+        'ha_timbro': ha_timbro,
+        'recensione_utente': recensione_utente,
     })
 
 def guide(request):
@@ -281,14 +287,16 @@ def passaporto(request):
     punti_totali = sum(v.rifugio.altitudine for v in visite)
 
     attivita = []
-    for v in visite[:5]:
+    trenta_giorni_fa = timezone.now() - timedelta(days=30)
+
+    for v in visite.filter(data_visita__gte=trenta_giorni_fa)[:5]:
         attivita.append({'icona': 'landscape', 'testo': f'Hai visitato {v.rifugio.nome}', 'data': v.data_visita})
-    for p in prenotazioni.order_by('-id')[:3]:
+
+    for p in prenotazioni.filter(data_arrivo__gte=trenta_giorni_fa.date()).order_by('-id')[:3]:
         attivita.append({'icona': 'calendar_today', 'testo': f'Hai prenotato {p.rifugio.nome}', 'data': p.data_arrivo})
+
     for f in preferiti_qs.order_by('-id')[:3]:
         attivita.append({'icona': 'bookmark', 'testo': f'Hai salvato {f.rifugio.nome} nei preferiti', 'data': date.today()})
-    attivita.sort(key=lambda x: str(x['data']), reverse=True)
-    attivita = attivita[:8]
 
     return render(request, 'rifugi/passaporto.html', {
         'visite': visite,
@@ -371,6 +379,50 @@ def checkin(request):
         return redirect('passaporto')
 
     return render(request, 'checkin.html')
+
+@gruppo_richiesto('Escursionista')
+def scrivi_recensione(request, pk):
+    rifugio = get_object_or_404(Rifugio, pk=pk)
+    ha_timbro = Visita.objects.filter(escursionista=request.user, rifugio=rifugio).exists()
+    
+    if not ha_timbro:
+        messages.error(request, 'Devi aver visitato il rifugio per scrivere una recensione.')
+        return redirect('rifugio', pk=pk)
+    
+    if request.method == 'POST':
+        testo = request.POST.get('testo', '').strip()
+        voto = request.POST.get('voto')
+        
+        if testo and voto:
+            Recensione.objects.update_or_create(
+                escursionista=request.user,
+                rifugio=rifugio,
+                defaults={'testo': testo, 'voto': int(voto)}
+            )
+            messages.success(request, 'Recensione salvata!')
+    
+    return redirect('rifugio', pk=pk)
+
+@gruppo_richiesto('Escursionista')
+def modifica_profilo(request):
+    if request.method == 'POST':
+        request.user.first_name = request.POST.get('first_name', '')
+        request.user.last_name = request.POST.get('last_name', '')
+        request.user.email = request.POST.get('email', '')
+        request.user.save()
+        
+        # Cambio password opzionale
+        nuova_password = request.POST.get('nuova_password', '')
+        if nuova_password:
+            request.user.set_password(nuova_password)
+            request.user.save()
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+        
+        messages.success(request, 'Profilo aggiornato!')
+        return redirect('passaporto')
+    
+    return render(request, 'rifugi/modifica_profilo.html')
 
 @gruppo_richiesto('GestoreRifugio')
 def dashboard_gestore(request):
