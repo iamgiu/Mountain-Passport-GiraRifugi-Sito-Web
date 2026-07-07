@@ -226,6 +226,7 @@ class Evento(models.Model):
     data = models.DateField()
     ora = models.TimeField(blank=True, null=True)
     posti_disponibili = models.IntegerField(default=0)
+    immagine = models.ImageField(upload_to='eventi/', blank=True, null=True)
 
     class Meta:
         verbose_name_plural = "Eventi"
@@ -234,3 +235,22 @@ class Evento(models.Model):
     def __str__(self):
         return f"{self.titolo} — {self.rifugio.nome} ({self.data})"
         
+class IscrizioneEvento(models.Model):
+    escursionista = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='iscrizioni_eventi'
+    )
+    evento = models.ForeignKey(
+        Evento,
+        on_delete=models.CASCADE,
+        related_name='iscrizioni'
+    )
+    data_iscrizione = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = "Iscrizioni Eventi"
+        unique_together = ('escursionista', 'evento')
+
+    def __str__(self):
+        return f"{self.escursionista.username} — {self.evento.titolo}"
