@@ -32,7 +32,10 @@
 .profilo-copertina {
   width: 100%;
   height: 160px;
-  background: linear-gradient(135deg, var(--green) 0%, var(--blue-dark) 100%);
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
+  background-image: url('/static/banner.jpg');
   border-radius: var(--radius);
 }
 .profilo-avatar {

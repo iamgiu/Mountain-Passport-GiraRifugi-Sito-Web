@@ -233,7 +233,4 @@ class Evento(models.Model):
 
     def __str__(self):
         return f"{self.titolo} — {self.rifugio.nome} ({self.data})"
-
-    def __str__(self):
-        return f"{self.escursionita.username} - {self.rifugio.nome}"
         
