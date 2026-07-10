@@ -17,4 +17,5 @@ urlpatterns = [
     path('rifugi/<int:pk>/preferito/', views.toggle_preferito, name='toggle_preferito'),
     path('rifugi/<int:pk>/recensione/', views.scrivi_recensione, name='scrivi_recensione'),
     path('profilo/modifica/', views.modifica_profilo, name='modifica_profilo'),
+    path('eventi/<int:pk>/iscriviti/', views.iscriviti_evento, name='iscriviti_evento'),
 ]

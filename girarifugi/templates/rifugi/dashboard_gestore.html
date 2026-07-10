@@ -151,6 +151,34 @@
 </div>
 {% endfor %}
 
+<!-- ══ ISCRIZIONI EVENTI ══ -->
+<h2 class="section-title">Iscrizioni agli eventi</h2>
+
+{% for e in eventi %}
+    {% if e.iscrizioni.count > 0 %}
+    <div class="card">
+        <div>
+            <h3>{{ e.titolo }}</h3>
+            <p>{{ e.data }}{% if e.ora %} alle {{ e.ora }}{% endif %}</p>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center;">
+            <span style="font-size:0.85rem; color:var(--gray);">Iscritti:</span>
+            {% for iscr in e.iscrizioni.all %}
+            <span class="badge badge-blue">
+                <span class="material-icons" style="font-size:0.8rem; vertical-align:middle;">person</span>
+                {{ iscr.escursionista.username }}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+{% empty %}
+<div class="empty-state">
+    <span class="material-icons">event</span>
+    <p>Nessuna iscrizione ancora.</p>
+</div>
+{% endfor %}
+
 <!-- ══ EVENTI ══ -->
 <h2 class="section-title">I miei eventi</h2>
 

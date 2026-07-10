@@ -46,7 +46,7 @@ class NuovoRifugioForm(forms.ModelForm):
 class EventoForm(forms.ModelForm):
     class Meta:
         model = Evento
-        fields = ['rifugio', 'titolo', 'descrizione', 'data', 'ora', 'posti_disponibili']
+        fields = ['rifugio', 'titolo', 'descrizione', 'data', 'ora', 'posti_disponibili', 'immagine']
 
 # ─── VISTE PUBBLICHE ──────────────────────────────────────────────────────────
 
@@ -233,6 +233,27 @@ def iscriviti_itinerario(request, pk):
             messages.error(request, 'Posti esauriti.')
     return redirect('guide')
 
+@gruppo_richiesto('Escursionista')
+def iscriviti_evento(request, pk):
+    from .models import IscrizioneEvento
+    evento = get_object_or_404(Evento, pk=pk)
+    if request.method == 'POST':
+        num_persone = int(request.POST.get('num_persone', 1))
+        if evento.posti_disponibili >= num_persone:
+            _, created = IscrizioneEvento.objects.get_or_create(
+                escursionista=request.user,
+                evento=evento
+            )
+            if created:
+                evento.posti_disponibili -= num_persone
+                evento.save()
+                messages.success(request, f'Iscritto a {evento.titolo} per {num_persone} person{"a" if num_persone == 1 else "e"}!')
+            else:
+                messages.warning(request, 'Sei già iscritto.')
+        else:
+            messages.error(request, f'Posti insufficienti. Disponibili: {evento.posti_disponibili}')
+    return redirect('eventi')
+
 def eventi(request):
     from datetime import date
     qs = Evento.objects.select_related('rifugio').filter(data__gte=date.today())
@@ -245,8 +266,17 @@ def eventi(request):
         qs = qs.filter(rifugio__regione__icontains=regione)
     if dal:
         qs = qs.filter(data__gte=dal)
+
+    iscrizioni_utente = []
+    if request.user.is_authenticated:
+        from .models import IscrizioneEvento
+        iscrizioni_utente = list(
+            IscrizioneEvento.objects.filter(escursionista=request.user).values_list('evento_id', flat=True)
+        )
+
     return render(request, 'eventi.html', {
         'eventi': qs,
+        'iscrizioni_utente': iscrizioni_utente,
         'q': q, 'regione': regione, 'dal': dal,
     })
 
@@ -476,7 +506,7 @@ def dashboard_gestore(request):
             messages.success(request, 'Prenotazione rifiutata.')
 
         elif azione == 'crea_evento':
-            form = EventoForm(request.POST)
+            form = EventoForm(request.POST, request.FILES) 
             form.fields['rifugio'].queryset = rifugi
             if form.is_valid():
                 form.save()
@@ -487,7 +517,7 @@ def dashboard_gestore(request):
         elif azione == 'modifica_evento':
             pk = request.POST.get('evento_pk')
             e = get_object_or_404(Evento, pk=pk, rifugio__gestore=request.user)
-            form = EventoForm(request.POST, instance=e)
+            form = EventoForm(request.POST, request.FILES, instance=e)  # ← manca instance=e!
             form.fields['rifugio'].queryset = rifugi
             if form.is_valid():
                 form.save()

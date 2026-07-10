@@ -25,7 +25,9 @@
 <div class="eventi-grid">
     {% for evento in eventi %}
     <div class="evento-card">
-        {% if evento.rifugio.immagine %}
+        {% if evento.immagine %}
+            <img src="{{ evento.immagine.url }}" alt="{{ evento.titolo }}">
+        {% elif evento.rifugio.immagine %}
             <img src="{{ evento.rifugio.immagine.url }}" alt="{{ evento.titolo }}">
         {% else %}
             <div class="evento-card-placeholder"></div>
@@ -41,7 +43,7 @@
                 {{ evento.rifugio.nome }} — {{ evento.rifugio.regione }}
             </p>
             {% if evento.descrizione %}
-            <p class="evento-descrizione">{{ evento.descrizione|truncatewords:20 }}</p>
+            <p class="evento-descrizione">{{ evento.descrizione }}</p>
             {% endif %}
             <div class="evento-footer">
                 <span class="badge {% if evento.posti_disponibili > 0 %}badge-green{% else %}badge-red{% endif %}">
@@ -51,7 +53,28 @@
                         Sold out
                     {% endif %}
                 </span>
-                <a href="{% url 'rifugio' evento.rifugio.pk %}" class="btn btn-outline btn-sm">Vai al rifugio</a>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
+                        {% if evento.pk in iscrizioni_utente %}
+                        <span class="badge badge-green">
+                            <span class="material-icons" style="font-size:0.85rem; vertical-align:middle;">check</span>
+                            Iscritto
+                        </span>
+                        {% elif evento.posti_disponibili > 0 %}
+                        <form method="post" action="{% url 'iscriviti_evento' evento.pk %}">
+                            {% csrf_token %}
+                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                <input type="number" name="num_persone" value="1" min="1" max="{{ evento.posti_disponibili }}"
+                                    style="width:55px; border:1px solid var(--gray-light); border-radius:var(--radius-sm); padding:0.3rem 0.5rem; font-family:'Montserrat',sans-serif;">
+                                <button type="submit" class="btn btn-primary btn-sm">Iscriviti</button>
+                            </div>
+                        </form>
+                        {% endif %}
+                    {% elif not user.is_authenticated %}
+                    <a href="/accounts/login/" class="btn btn-outline btn-sm">Accedi per iscriverti</a>
+                    {% endif %}
+                    <a href="{% url 'rifugio' evento.rifugio.pk %}" class="btn btn-outline btn-sm">Vai al rifugio</a>
+                </div>
             </div>
         </div>
     </div>
