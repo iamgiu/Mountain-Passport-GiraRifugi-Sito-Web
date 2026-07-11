@@ -114,7 +114,7 @@ def home(request):
         elif nome_gruppo == 'GuidaAlpina':
             preferiti = Preferito.objects.filter(escursionista=request.user).select_related('rifugio')
             rifugi_preferiti = [p.rifugio for p in preferiti]
-            itinerari_guida = Itinerario.objects.filter(guida=request.user).order_by('data')
+            itinerari_guida = Itinerario.objects.filter(guida=request.user, data__gte=date.today()).order_by('data')
 
         elif nome_gruppo == 'Admin' or request.user.is_superuser:
             # Leaderboard rapida top 5
@@ -182,6 +182,9 @@ def rifugio(request, pk):
         recensione_utente = Recensione.objects.filter(
             escursionista=request.user, rifugio=r
         ).first()
+
+    if prenotazione and prenotazione.data_partenza < date.today():
+        prenotazione = None
 
     return render(request, 'rifugi/rifugio.html', {
         'rifugio': r,
@@ -360,6 +363,13 @@ def prenota(request, pk):
         data_partenza = request.POST.get('data_partenza')
         num_ospiti = int(request.POST.get('num_ospiti', 1))
 
+        # Elimina prenotazione rifiutata precedente
+        Prenotazione.objects.filter(
+            escursionista=request.user,
+            rifugio=rifugio,
+            stato='rifiutata'
+        ).delete()
+
         prenotazione = Prenotazione(
             escursionista=request.user,
             rifugio=rifugio,
@@ -459,7 +469,7 @@ def dashboard_gestore(request):
     prenotazioni = Prenotazione.objects.filter(
         rifugio__gestore=request.user
     ).select_related('escursionista', 'rifugio').order_by('-id')
-    eventi = Evento.objects.filter(rifugio__gestore=request.user).order_by('data')
+    eventi = Evento.objects.filter(rifugio__gestore=request.user, data__gte=date.today()).prefetch_related('iscrizioni__escursionista').order_by('data')
 
     nuovo_rifugio_form = NuovoRifugioForm()
     evento_form = EventoForm()
@@ -540,7 +550,7 @@ def dashboard_gestore(request):
 
 @gruppo_richiesto('GuidaAlpina')
 def dashboard_guida(request):
-    itinerari = Itinerario.objects.filter(guida=request.user).prefetch_related('iscrizioni__escursionista').order_by('data')
+    itinerari = Itinerario.objects.filter(guida=request.user, data__gte=date.today()).prefetch_related('iscrizioni__escursionista').order_by('data')
 
     if request.method == 'POST':
         azione = request.POST.get('azione')

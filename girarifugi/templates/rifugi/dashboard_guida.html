@@ -13,62 +13,64 @@
 
 {% for it in itinerari %}
 <div class="card" style="display:block; margin-bottom:1rem;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.75rem;">
+    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.75rem;">
+        <div style="width:72px; height:72px; border-radius:var(--radius-sm); background:linear-gradient(135deg, var(--green) 0%, var(--blue-dark) 100%); flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+            <span class="material-icons" style="color:rgba(255,255,255,0.7); font-size:2rem;">hiking</span>
+        </div>
         <div>
             <h3>{{ it.titolo }}</h3>
             <p>{{ it.data }}{% if it.ora %} alle {{ it.ora|time:"H:i" }}{% endif %} — 
                <span class="badge badge-blue">{{ it.get_difficolta_display }}</span>
             </p>
-            <p>{{ it.posti_disponibili }} posti disponibili</p>
-            {% if it.descrizione %}<p style="margin-top:0.3rem;">{{ it.descrizione|truncatewords:15 }}</p>{% endif %}
-        </div>
-        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-            <details class="modifica-details">
-                <summary class="btn btn-outline btn-sm">Modifica</summary>
-                <form method="post" style="margin-top:0.75rem; min-width:300px;">
-                    {% csrf_token %}
-                    <input type="hidden" name="azione" value="modifica_itinerario">
-                    <input type="hidden" name="itinerario_pk" value="{{ it.pk }}">
-                    <div class="form-group">
-                        <label>Titolo</label>
-                        <input type="text" name="titolo" value="{{ it.titolo }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Descrizione</label>
-                        <textarea name="descrizione" rows="2">{{ it.descrizione }}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Data</label>
-                        <input type="date" name="data" value="{{ it.data|date:'Y-m-d' }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Ora</label>
-                        <input type="time" name="ora" value="{{ it.ora }}">
-                    </div>
-                    <div class="form-group">
-                        <label>Difficoltà</label>
-                        <select name="difficolta">
-                            <option value="facile" {% if it.difficolta == 'facile' %}selected{% endif %}>Facile</option>
-                            <option value="medio" {% if it.difficolta == 'medio' %}selected{% endif %}>Medio</option>
-                            <option value="difficile" {% if it.difficolta == 'difficile' %}selected{% endif %}>Difficile</option>
-                            <option value="esperto" {% if it.difficolta == 'esperto' %}selected{% endif %}>Esperto</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Posti disponibili</label>
-                        <input type="number" name="posti_disponibili" value="{{ it.posti_disponibili }}" min="0">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-sm">Salva</button>
-                </form>
-            </details>
-            <form method="post" style="display:inline;">
-                {% csrf_token %}
-                <input type="hidden" name="azione" value="elimina_itinerario">
-                <input type="hidden" name="itinerario_pk" value="{{ it.pk }}">
-                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Eliminare questo itinerario?')">Elimina</button>
-            </form>
+            <p style="font-size:0.82rem; color:var(--green-dark);">{{ it.posti_disponibili }} posti disponibili</p>
         </div>
     </div>
+
+    <details class="modifica-details">
+        <summary>Modifica</summary>
+        <form method="post" style="margin-top:0.75rem;">
+            {% csrf_token %}
+            <input type="hidden" name="azione" value="modifica_itinerario">
+            <input type="hidden" name="itinerario_pk" value="{{ it.pk }}">
+            <div class="form-group">
+                <label>Titolo</label>
+                <input type="text" name="titolo" value="{{ it.titolo }}" required>
+            </div>
+            <div class="form-group">
+                <label>Descrizione</label>
+                <textarea name="descrizione" rows="2">{{ it.descrizione }}</textarea>
+            </div>
+            <div class="form-group">
+                <label>Data</label>
+                <input type="date" name="data" value="{{ it.data|date:'Y-m-d' }}" required>
+            </div>
+            <div class="form-group">
+                <label>Ora</label>
+                <input type="time" name="ora" value="{{ it.ora }}">
+            </div>
+            <div class="form-group">
+                <label>Difficoltà</label>
+                <select name="difficolta">
+                    <option value="facile" {% if it.difficolta == 'facile' %}selected{% endif %}>Facile</option>
+                    <option value="medio" {% if it.difficolta == 'medio' %}selected{% endif %}>Medio</option>
+                    <option value="difficile" {% if it.difficolta == 'difficile' %}selected{% endif %}>Difficile</option>
+                    <option value="esperto" {% if it.difficolta == 'esperto' %}selected{% endif %}>Esperto</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Posti disponibili</label>
+                <input type="number" name="posti_disponibili" value="{{ it.posti_disponibili }}" min="0">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Salva modifiche</button>
+        </form>
+
+        <form method="post" style="margin-top:0.5rem;">
+            {% csrf_token %}
+            <input type="hidden" name="azione" value="elimina_itinerario">
+            <input type="hidden" name="itinerario_pk" value="{{ it.pk }}">
+            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Eliminare questo itinerario?')">Elimina</button>
+        </form>
+    </details>
 
     <!-- ISCRITTI -->
     <div style="margin-top:1rem; border-top:1px solid var(--gray-light); padding-top:0.75rem;">

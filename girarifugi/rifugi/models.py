@@ -170,6 +170,18 @@ class IscrizioneItinerario(models.Model):
 
     def __str__(self):
         return f"{self.escursionista.username} — {self.itinerario.titolo}"
+    
+class ProfiloGuida(models.Model):
+    guida = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='profilo_guida'
+    )
+    bio = models.TextField(blank=True)
+    foto = models.ImageField(upload_to='guide/', blank=True, null=True)
+
+    def __str__(self):
+        return f"Profilo di {self.guida.username}"
 
 class Recensione(models.Model):
 

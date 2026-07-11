@@ -99,26 +99,6 @@
         {% endfor %}
     </div>
 
-    <h2 class="home-section-title">Rifugi Preferiti</h2>
-    <div class="rifugi-scroll">
-        {% for rifugio in rifugi_preferiti %}
-        <a href="{% url 'rifugio' rifugio.pk %}" class="rifugio-card-big">
-            {% if rifugio.immagine %}<img src="{{ rifugio.immagine.url }}" alt="{{ rifugio.nome }}">
-            {% else %}<div class="rifugio-card-placeholder"></div>{% endif %}
-            <div class="rifugio-card-overlay"></div>
-            <div class="rifugio-card-content">
-                <h3>{{ rifugio.nome }}</h3>
-                <div class="rifugio-card-meta">
-                    <span>{{ rifugio.altitudine }} m</span>
-                    <span>{{ rifugio.regione }}</span>
-                </div>
-            </div>
-        </a>
-        {% empty %}
-        <p style="color: var(--gray);">Nessun preferito ancora.</p>
-        {% endfor %}
-    </div>
-
     <h2 class="home-section-title">Rifugi Mensili</h2>
     <div class="rifugi-scroll">
         {% for rifugio in rifugi_mensili %}
