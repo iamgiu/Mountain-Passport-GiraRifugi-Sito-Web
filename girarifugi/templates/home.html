@@ -55,8 +55,13 @@
         {% for r in rifugi_gestore %}
             {% for evento in r.eventi.all %}
             <a href="{% url 'dashboard_gestore' %}" class="rifugio-card-big">
-                {% if r.immagine %}<img src="{{ r.immagine.url }}" alt="{{ evento.titolo }}">
-                {% else %}<div class="rifugio-card-placeholder"></div>{% endif %}
+                {% if evento.immagine %}
+                    <img src="{{ evento.immagine.url }}" alt="{{ evento.titolo }}">
+                {% elif evento.rifugio.immagine %}
+                    <img src="{{ evento.rifugio.immagine.url }}" alt="{{ evento.titolo }}">
+                {% else %}
+                    <div class="evento-card-placeholder"></div>
+                {% endif %}
                 <div class="rifugio-card-overlay"></div>
                 <div class="rifugio-card-content">
                     <h3>{{ evento.titolo }}</h3>

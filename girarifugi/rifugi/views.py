@@ -238,20 +238,19 @@ def iscriviti_evento(request, pk):
     from .models import IscrizioneEvento
     evento = get_object_or_404(Evento, pk=pk)
     if request.method == 'POST':
-        num_persone = int(request.POST.get('num_persone', 1))
-        if evento.posti_disponibili >= num_persone:
+        if evento.posti_disponibili > 0:
             _, created = IscrizioneEvento.objects.get_or_create(
                 escursionista=request.user,
                 evento=evento
             )
             if created:
-                evento.posti_disponibili -= num_persone
+                evento.posti_disponibili -= 1
                 evento.save()
-                messages.success(request, f'Iscritto a {evento.titolo} per {num_persone} person{"a" if num_persone == 1 else "e"}!')
+                messages.success(request, f'Iscritto a {evento.titolo}!')
             else:
                 messages.warning(request, 'Sei già iscritto.')
         else:
-            messages.error(request, f'Posti insufficienti. Disponibili: {evento.posti_disponibili}')
+            messages.error(request, 'Posti esauriti.')
     return redirect('eventi')
 
 def eventi(request):

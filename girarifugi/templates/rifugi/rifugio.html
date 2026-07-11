@@ -40,6 +40,13 @@
         {% endif %}
     </div>
 
+    <!-- Gestore -->
+    {% if rifugio.gestore %}
+        <p style="font-size:0.85rem; color:var(--gray); margin-top:0.25rem;">
+            Gestito da {{ rifugio.gestore.username }}
+        </p>
+    {% endif %}
+
 
     <!-- PUNTI -->
     <p class="detail-punti">+{{ rifugio.altitudine|floatformat:0 }} punti</p>

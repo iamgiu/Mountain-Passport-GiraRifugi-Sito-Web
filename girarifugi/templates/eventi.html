@@ -63,11 +63,7 @@
                         {% elif evento.posti_disponibili > 0 %}
                         <form method="post" action="{% url 'iscriviti_evento' evento.pk %}">
                             {% csrf_token %}
-                            <div style="display:flex; align-items:center; gap:0.5rem;">
-                                <input type="number" name="num_persone" value="1" min="1" max="{{ evento.posti_disponibili }}"
-                                    style="width:55px; border:1px solid var(--gray-light); border-radius:var(--radius-sm); padding:0.3rem 0.5rem; font-family:'Montserrat',sans-serif;">
-                                <button type="submit" class="btn btn-primary btn-sm">Iscriviti</button>
-                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">Iscriviti</button>
                         </form>
                         {% endif %}
                     {% elif not user.is_authenticated %}

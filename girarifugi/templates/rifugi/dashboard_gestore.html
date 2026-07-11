@@ -153,25 +153,16 @@
 
 <!-- ══ ISCRIZIONI EVENTI ══ -->
 <h2 class="section-title">Iscrizioni agli eventi</h2>
-
 {% for e in eventi %}
-    {% if e.iscrizioni.count > 0 %}
+    {% for iscr in e.iscrizioni.all %}
     <div class="card">
         <div>
-            <h3>{{ e.titolo }}</h3>
-            <p>{{ e.data }}{% if e.ora %} alle {{ e.ora }}{% endif %}</p>
+            <h3>{{ iscr.escursionista.username }}</h3>
+            <p>{{ e.titolo }} — {{ e.data }} — {{ iscr.num_persone }} person{% if iscr.num_persone == 1 %}a{% else %}e{% endif %}</p>
         </div>
-        <div style="display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center;">
-            <span style="font-size:0.85rem; color:var(--gray);">Iscritti:</span>
-            {% for iscr in e.iscrizioni.all %}
-            <span class="badge badge-blue">
-                <span class="material-icons" style="font-size:0.8rem; vertical-align:middle;">person</span>
-                {{ iscr.escursionista.username }}
-            </span>
-            {% endfor %}
-        </div>
+        <span class="badge badge-green">Iscritto</span>
     </div>
-    {% endif %}
+    {% endfor %}
 {% empty %}
 <div class="empty-state">
     <span class="material-icons">event</span>
@@ -183,57 +174,65 @@
 <h2 class="section-title">I miei eventi</h2>
 
 {% for e in eventi %}
-<div class="card">
-    <div>
-        <h3>{{ e.titolo }}</h3>
-        <p>{{ e.rifugio.nome }} — {{ e.data }}{% if e.ora %} alle {{ e.ora }}{% endif %} — {{ e.posti_disponibili }} posti</p>
-        {% if e.descrizione %}<p>{{ e.descrizione }}</p>{% endif %}
+<div class="card" style="display:block;">
+    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.75rem;">
+        {% if e.immagine %}
+            <img src="{{ e.immagine.url }}" alt="{{ e.titolo }}" style="width:72px; height:72px; border-radius:var(--radius-sm); object-fit:cover; flex-shrink:0;">
+        {% else %}
+            <div style="width:72px; height:72px; border-radius:var(--radius-sm); background:linear-gradient(135deg, var(--green) 0%, var(--blue-dark) 100%); flex-shrink:0;"></div>
+        {% endif %}
+        <div>
+            <h3>{{ e.titolo }}</h3>
+            <p>{{ e.rifugio.nome }} — {{ e.data }}{% if e.ora %} alle {{ e.ora }}{% endif %} — {{ e.posti_disponibili }} posti</p>
+        </div>
     </div>
-    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-        <details class="modifica-details">
-            <summary class="btn btn-outline btn-sm">Modifica</summary>
-            <form method="post" style="margin-top:0.75rem; min-width:280px;">
-                {% csrf_token %}
-                <input type="hidden" name="azione" value="modifica_evento">
-                <input type="hidden" name="evento_pk" value="{{ e.pk }}">
-                <div class="form-group">
-                    <label>Titolo</label>
-                    <input type="text" name="titolo" value="{{ e.titolo }}" required>
-                </div>
-                <div class="form-group">
-                    <label>Descrizione</label>
-                    <textarea name="descrizione" rows="2">{{ e.descrizione }}</textarea>
-                </div>
-                <div class="form-group">
-                    <label>Data</label>
-                    <input type="date" name="data" value="{{ e.data|date:'Y-m-d' }}" required>
-                </div>
-                <div class="form-group">
-                    <label>Ora</label>
-                    <input type="time" name="ora" value="{{ e.ora }}">
-                </div>
-                <div class="form-group">
-                    <label>Posti disponibili</label>
-                    <input type="number" name="posti_disponibili" value="{{ e.posti_disponibili }}">
-                </div>
-                <div class="form-group">
-                    <label>Rifugio</label>
-                    <select name="rifugio">
-                        {% for r in rifugi %}
-                        <option value="{{ r.pk }}" {% if r.pk == e.rifugio.pk %}selected{% endif %}>{{ r.nome }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+
+    <details class="modifica-details">
+        <summary>Modifica</summary>
+        <form method="post" enctype="multipart/form-data" style="margin-top:0.75rem;">
+            {% csrf_token %}
+            <input type="hidden" name="azione" value="modifica_evento">
+            <input type="hidden" name="evento_pk" value="{{ e.pk }}">
+            <div class="form-group">
+                <label>Titolo</label>
+                <input type="text" name="titolo" value="{{ e.titolo }}" required>
+            </div>
+            <div class="form-group">
+                <label>Descrizione</label>
+                <textarea name="descrizione" rows="2">{{ e.descrizione }}</textarea>
+            </div>
+            <div class="form-group">
+                <label>Data</label>
+                <input type="date" name="data" value="{{ e.data|date:'Y-m-d' }}" required>
+            </div>
+            <div class="form-group">
+                <label>Ora</label>
+                <input type="time" name="ora" value="{{ e.ora }}">
+            </div>
+            <div class="form-group">
+                <label>Posti disponibili</label>
+                <input type="number" name="posti_disponibili" value="{{ e.posti_disponibili }}">
+            </div>
+            <div class="form-group">
+                <label>Rifugio</label>
+                <select name="rifugio">
+                    {% for r in rifugi %}
+                    <option value="{{ r.pk }}" {% if r.pk == e.rifugio.pk %}selected{% endif %}>{{ r.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
                 <button type="submit" class="btn btn-primary btn-sm">Salva</button>
-            </form>
-        </details>
-        <form method="post" style="display:inline;">
+            </div>
+        </form>
+
+        <form method="post" style="margin-top:0.5rem;">
             {% csrf_token %}
             <input type="hidden" name="azione" value="elimina_evento">
             <input type="hidden" name="evento_pk" value="{{ e.pk }}">
             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Eliminare questo evento?')">Elimina</button>
         </form>
-    </div>
+    </details>
 </div>
 {% empty %}
 <div class="empty-state">
