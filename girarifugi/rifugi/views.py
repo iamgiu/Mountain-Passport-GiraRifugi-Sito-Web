@@ -1,13 +1,17 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import Group
+from django.contrib.auth.views import redirect_to_login
+from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import User as AuthUser
+from django.db.models import Q
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from datetime import date, timedelta
 from django.utils import timezone
 from django import forms
-from .models import Rifugio, Visita, Timbro, Prenotazione, Recensione, Preferito, Evento, Itinerario, IscrizioneItinerario
+from django.contrib.auth import update_session_auth_hash
+from .models import Rifugio, Visita, Timbro, Prenotazione, Recensione, Preferito, Evento, Itinerario, IscrizioneItinerario, IscrizioneEvento, ProfiloGuida
 
 # ─── MIXIN PERMESSI ───────────────────────────────────────────────────────────
 
@@ -15,7 +19,6 @@ def gruppo_richiesto(nome_gruppo):
     def decorator(view_func):
         def wrapper(request, *args, **kwargs):
             if not request.user.is_authenticated:
-                from django.contrib.auth.views import redirect_to_login
                 return redirect_to_login(request.get_full_path())
             if not request.user.groups.filter(name=nome_gruppo).exists() and not request.user.is_superuser:
                 return render(request, '403.html', status=403)
@@ -27,7 +30,7 @@ def gruppo_richiesto(nome_gruppo):
 
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(required=True)
-    
+
     class Meta(UserCreationForm.Meta):
         fields = ['username', 'email', 'password1', 'password2']
 
@@ -63,7 +66,6 @@ def register(request):
     return render(request, 'registration/register.html', {'form': form})
 
 def home(request):
-    from django.contrib.auth.models import User as AuthUser
 
     # Variabili comuni sempre calcolate
     rifugi_mensili = Rifugio.objects.filter(stato='approvato').order_by('-id')[:10]
@@ -167,11 +169,11 @@ def home(request):
 def rifugio(request, pk):
     r = get_object_or_404(Rifugio, pk=pk)
     recensioni = Recensione.objects.filter(rifugio=r).select_related('escursionista').order_by('-data')
-    
+
     prenotazione = None
     ha_timbro = False
     recensione_utente = None
-    
+
     if request.user.is_authenticated:
         prenotazione = Prenotazione.objects.filter(
             escursionista=request.user, rifugio=r
@@ -195,14 +197,42 @@ def rifugio(request, pk):
     })
 
 def guide(request):
-    from datetime import date
-    qs = Itinerario.objects.select_related('guida').prefetch_related('iscrizioni').filter(data__gte=date.today())
+    is_admin = request.user.is_authenticated and (
+        request.user.groups.filter(name='Admin').exists() or request.user.is_superuser
+    )
+
+    if request.method == 'POST' and is_admin:
+        azione = request.POST.get('azione')
+
+        if azione == 'modifica_profilo_guida_admin':
+            pk = request.POST.get('guida_pk')
+            guida_target = get_object_or_404(AuthUser, pk=pk, groups__name='GuidaAlpina')
+            profilo, creato = ProfiloGuida.objects.get_or_create(guida=guida_target)
+            profilo.bio = request.POST.get('bio', '')
+            if request.FILES.get('foto'):
+                profilo.foto = request.FILES['foto']
+            profilo.save()
+            guida_target.first_name = request.POST.get('first_name', '')
+            guida_target.save()
+            messages.success(request, 'Guida aggiornata!')
+            return redirect('guide')
+
+    # Tutte le guide, con il loro profilo (se esiste), filtrabili per nome
+    guide_lista = AuthUser.objects.filter(groups__name='GuidaAlpina').select_related('profilo_guida').order_by('username')
+    guida_q = request.GET.get('guida_q', '')
+    if guida_q:
+        guide_lista = guide_lista.filter(
+            Q(username__icontains=guida_q) | Q(first_name__icontains=guida_q) | Q(last_name__icontains=guida_q)
+        )
+
+    # Itinerari futuri, filtrabili
+    itinerari = Itinerario.objects.select_related('guida').prefetch_related('iscrizioni').filter(data__gte=date.today())
     q = request.GET.get('q', '')
     difficolta = request.GET.get('difficolta', '')
     if q:
-        qs = qs.filter(titolo__icontains=q)
+        itinerari = itinerari.filter(titolo__icontains=q)
     if difficolta:
-        qs = qs.filter(difficolta=difficolta)
+        itinerari = itinerari.filter(difficolta=difficolta)
 
     iscrizioni_utente = []
     if request.user.is_authenticated:
@@ -211,10 +241,13 @@ def guide(request):
         )
 
     return render(request, 'guide.html', {
-        'itinerari': qs,
+        'guide_lista': guide_lista,
+        'guida_q': guida_q,
+        'itinerari': itinerari,
         'iscrizioni_utente': iscrizioni_utente,
         'q': q,
         'difficolta': difficolta,
+        'is_admin': is_admin,
     })
 
 @gruppo_richiesto('Escursionista')
@@ -238,7 +271,6 @@ def iscriviti_itinerario(request, pk):
 
 @gruppo_richiesto('Escursionista')
 def iscriviti_evento(request, pk):
-    from .models import IscrizioneEvento
     evento = get_object_or_404(Evento, pk=pk)
     if request.method == 'POST':
         if evento.posti_disponibili > 0:
@@ -257,7 +289,6 @@ def iscriviti_evento(request, pk):
     return redirect('eventi')
 
 def eventi(request):
-    from datetime import date
     qs = Evento.objects.select_related('rifugio').filter(data__gte=date.today())
     q = request.GET.get('q', '')
     regione = request.GET.get('regione', '')
@@ -271,7 +302,6 @@ def eventi(request):
 
     iscrizioni_utente = []
     if request.user.is_authenticated:
-        from .models import IscrizioneEvento
         iscrizioni_utente = list(
             IscrizioneEvento.objects.filter(escursionista=request.user).values_list('evento_id', flat=True)
         )
@@ -284,10 +314,10 @@ def eventi(request):
 
 def checkin(request, uuid):
     rifugio = get_object_or_404(Rifugio, qr_uuid=uuid)
-    
+
     if not request.user.is_authenticated:
         return redirect(f'/accounts/login/?next=/checkin/{uuid}/')
-    
+
     if not request.user.groups.filter(name='Escursionista').exists():
         messages.error(request, 'Solo gli escursionisti possono fare il check-in.')
         return redirect('rifugio', pk=rifugio.pk)
@@ -397,7 +427,7 @@ def checkin(request):
                 if str(r.qr_uuid).replace('-', '')[:8].upper() == codice.upper():
                     rifugio = r
                     break
-            
+
             if not rifugio:
                 messages.error(request, 'Codice non valido.')
                 return redirect('checkin')
@@ -414,7 +444,7 @@ def checkin(request):
 
         except Exception as e:
             messages.error(request, f'Errore: {e}')
-        
+
         return redirect('passaporto')
 
     return render(request, 'checkin.html')
@@ -423,15 +453,15 @@ def checkin(request):
 def scrivi_recensione(request, pk):
     rifugio = get_object_or_404(Rifugio, pk=pk)
     ha_timbro = Visita.objects.filter(escursionista=request.user, rifugio=rifugio).exists()
-    
+
     if not ha_timbro:
         messages.error(request, 'Devi aver visitato il rifugio per scrivere una recensione.')
         return redirect('rifugio', pk=pk)
-    
+
     if request.method == 'POST':
         testo = request.POST.get('testo', '').strip()
         voto = request.POST.get('voto')
-        
+
         if testo and voto:
             Recensione.objects.update_or_create(
                 escursionista=request.user,
@@ -439,7 +469,7 @@ def scrivi_recensione(request, pk):
                 defaults={'testo': testo, 'voto': int(voto)}
             )
             messages.success(request, 'Recensione salvata!')
-    
+
     return redirect('rifugio', pk=pk)
 
 @gruppo_richiesto('Escursionista')
@@ -449,18 +479,17 @@ def modifica_profilo(request):
         request.user.last_name = request.POST.get('last_name', '')
         request.user.email = request.POST.get('email', '')
         request.user.save()
-        
+
         # Cambio password opzionale
         nuova_password = request.POST.get('nuova_password', '')
         if nuova_password:
             request.user.set_password(nuova_password)
             request.user.save()
-            from django.contrib.auth import update_session_auth_hash
             update_session_auth_hash(request, request.user)
-        
+
         messages.success(request, 'Profilo aggiornato!')
         return redirect('passaporto')
-    
+
     return render(request, 'rifugi/modifica_profilo.html')
 
 @gruppo_richiesto('GestoreRifugio')
@@ -515,7 +544,7 @@ def dashboard_gestore(request):
             messages.success(request, 'Prenotazione rifiutata.')
 
         elif azione == 'crea_evento':
-            form = EventoForm(request.POST, request.FILES) 
+            form = EventoForm(request.POST, request.FILES)
             form.fields['rifugio'].queryset = rifugi
             if form.is_valid():
                 form.save()
@@ -591,7 +620,6 @@ def dashboard_guida(request):
 
 @gruppo_richiesto('Admin')
 def pannello_admin(request):
-    from django.contrib.auth.models import User
 
     rifugi_in_attesa = Rifugio.objects.filter(stato='in_attesa').select_related('gestore')
     rifugi_tutti = Rifugio.objects.filter(stato='approvato').order_by('-id')
