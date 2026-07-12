@@ -43,7 +43,10 @@
                 {{ evento.rifugio.nome }} — {{ evento.rifugio.regione }}
             </p>
             {% if evento.descrizione %}
-            <p class="evento-descrizione">{{ evento.descrizione }}</p>
+                <details class="modifica-details">
+                    <summary>Descrizione</summary>
+                    <p class="evento-descrizione">{{ evento.descrizione }}</p>
+                </details>
             {% endif %}
             <div class="evento-footer">
                 <span class="badge {% if evento.posti_disponibili > 0 %}badge-green{% else %}badge-red{% endif %}">
