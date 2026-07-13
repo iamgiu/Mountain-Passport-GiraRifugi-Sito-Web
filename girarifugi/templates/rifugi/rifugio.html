@@ -24,10 +24,12 @@
             <a href="{% url 'checkin' %}" class="btn-preferito btn-prenota" title="Check-in">
                 <span class="material-icons">qr_code_scanner</span>
             </a>
-            <form method="post" action="{% url 'toggle_preferito' rifugio.pk %}">
+            <form method="post" action="{% url 'toggle_preferito' rifugio.pk %}" id="form-preferito">
                 {% csrf_token %}
-                <button type="submit" class="btn-preferito" title="Salva nei preferiti">
-                    <span class="material-icons">bookmark</span>
+                <button type="submit" class="btn-preferito" title="Salva nei preferiti" id="btn-preferito">
+                    <span class="material-icons" id="icona-preferito">
+                        {% if e_preferito %}bookmark{% else %}bookmark_border{% endif %}
+                    </span>
                 </button>
             </form>
         </div>
@@ -234,9 +236,12 @@
         {% endif %}
     {% endif %}
 </div>
+
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    // ─── VALIDAZIONE DATE PRENOTAZIONE ─────────────────────────────
     const inputArrivi = document.querySelectorAll('input[name="data_arrivo"]');
 
     inputArrivi.forEach(function (inputArrivo) {
@@ -288,7 +293,6 @@ document.addEventListener('DOMContentLoaded', function () {
         function validaDate() {
             nascondiErrore();
 
-            // Controllo preliminare: l'utente ha scritto qualcosa di non interpretabile come data?
             if (inputArrivo.validity.badInput) {
                 mostraErrore('La data di arrivo inserita non è valida.');
                 return false;
@@ -369,6 +373,48 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    // ─── TOGGLE PREFERITI VIA FETCH API ─────────────────────────────
+    const formPreferito = document.getElementById('form-preferito');
+
+    if (formPreferito) {
+        const iconaPreferito = document.getElementById('icona-preferito');
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        formPreferito.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const url = formPreferito.getAttribute('action');
+            const csrftoken = getCookie('csrftoken');
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('Errore nella richiesta');
+                }
+                return response.json();
+            })
+            .then(function (data) {
+                iconaPreferito.textContent = data.aggiunto ? 'bookmark' : 'bookmark_border';
+            })
+            .catch(function (error) {
+                console.error('Errore toggle preferito:', error);
+            });
+        });
+    }
+
 });
 </script>
 {% endblock %}

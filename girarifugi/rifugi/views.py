@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from datetime import date, timedelta
 from django.utils import timezone
+from django.http import JsonResponse
 from django import forms
 from django.contrib.auth import update_session_auth_hash
 from .models import Rifugio, Visita, Timbro, Prenotazione, Recensione, Preferito, Evento, Itinerario, IscrizioneItinerario, IscrizioneEvento, ProfiloGuida
@@ -213,6 +214,7 @@ def rifugio(request, pk):
     prenotazione = None
     ha_timbro = False
     recensione_utente = None
+    e_preferito = False 
 
     if request.user.is_authenticated:
         prenotazione = Prenotazione.objects.filter(
@@ -224,6 +226,9 @@ def rifugio(request, pk):
         recensione_utente = Recensione.objects.filter(
             escursionista=request.user, rifugio=r
         ).first()
+        e_preferito = Preferito.objects.filter(
+            escursionista=request.user, rifugio=r
+        ).exists()
 
     if prenotazione and prenotazione.data_partenza < date.today():
         prenotazione = None
@@ -234,6 +239,7 @@ def rifugio(request, pk):
         'prenotazione': prenotazione,
         'ha_timbro': ha_timbro,
         'recensione_utente': recensione_utente,
+        'e_preferito': e_preferito,
     })
 
 def guide(request):
@@ -422,9 +428,19 @@ def toggle_preferito(request, pk):
         )
         if not created:
             preferito.delete()
-            messages.info(request, f'{rifugio.nome} rimosso dai preferiti.')
+            aggiunto = False
         else:
+            aggiunto = True
+
+        # Se la richiesta arriva da JavaScript (Fetch), rispondi in JSON
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'aggiunto': aggiunto})
+
+        # Fallback senza JS: comportamento originale con redirect
+        if aggiunto:
             messages.success(request, f'{rifugio.nome} aggiunto ai preferiti!')
+        else:
+            messages.info(request, f'{rifugio.nome} rimosso dai preferiti.')
     return redirect('rifugio', pk=pk)
 
 @gruppo_richiesto('Escursionista')
