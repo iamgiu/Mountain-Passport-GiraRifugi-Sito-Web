@@ -293,15 +293,71 @@
         {% endfor %}
     </div>
 
+    <!-- ══ RICERCA RIFUGI ══ -->
+    <h2 class="home-section-title">Cerca un rifugio</h2>
+    <div class="card" style="display:block; margin-bottom:1.5rem;">
+        <form method="get" action="{% url 'home' %}">
+            <div class="prenota-grid">
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" name="nome" value="{{ nome }}" placeholder="Es. Rifugio Torino">
+                </div>
+                <div class="form-group">
+                    <label>Regione</label>
+                    <input type="text" name="regione" value="{{ regione }}" placeholder="Es. Piemonte">
+                </div>
+                <div class="form-group">
+                    <label>Quota minima (m)</label>
+                    <input type="number" name="quota_min" value="{{ quota_min }}" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Quota massima (m)</label>
+                    <input type="number" name="quota_max" value="{{ quota_max }}" min="0">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Cerca</button>
+            {% if nome or regione or quota_min or quota_max %}
+            <a href="{% url 'home' %}" class="btn btn-secondary">Reimposta filtri</a>
+            {% endif %}
+        </form>
+    </div>
+
+    {% if nome or regione or quota_min or quota_max %}
+    <h2 class="home-section-title">Risultati della ricerca</h2>
+    {% if rifugi %}
+    <div class="rifugi-scroll">
+        {% for rifugio in rifugi %}
+        <a href="{% url 'rifugio' rifugio.pk %}" class="rifugio-card-big">
+            {% if rifugio.immagine %}<img src="{{ rifugio.immagine.url }}" alt="{{ rifugio.nome }}">
+            {% else %}<div class="rifugio-card-placeholder"></div>{% endif %}
+            <div class="rifugio-card-overlay"></div>
+            <div class="rifugio-card-content">
+                <h3>{{ rifugio.nome }}</h3>
+                <div class="rifugio-card-meta">
+                    <span>{{ rifugio.altitudine }} m</span>
+                    <span>{{ rifugio.regione }}</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
     <div class="pagination">
         {% if rifugi.has_previous %}
             <a href="?page={{ rifugi.previous_page_number }}&nome={{ nome }}&regione={{ regione }}&quota_min={{ quota_min }}&quota_max={{ quota_max }}">← Precedente</a>
         {% endif %}
-        {% if rifugi %}<span>Pagina {{ rifugi.number }} di {{ rifugi.paginator.num_pages }}</span>{% endif %}
+        <span>Pagina {{ rifugi.number }} di {{ rifugi.paginator.num_pages }}</span>
         {% if rifugi.has_next %}
             <a href="?page={{ rifugi.next_page_number }}&nome={{ nome }}&regione={{ regione }}&quota_min={{ quota_min }}&quota_max={{ quota_max }}">Successiva →</a>
         {% endif %}
     </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="material-icons">search_off</span>
+        <p>Nessun rifugio trovato con questi filtri.</p>
+    </div>
+    {% endif %}
+    {% endif %}
 
 {% endif %}
 

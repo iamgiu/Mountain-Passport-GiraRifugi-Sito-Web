@@ -16,7 +16,10 @@
 <body>
  
 <nav class="navbar">
-    <a href="{% url 'home' %}" class="navbar-brand">🏔️ Mountain Passport</a>
+    <a href="/" class="navbar-brand" style="display:flex; align-items:center; gap:0.5rem;">
+        <img src="{% static 'logo.png' %}" alt="Mountain Passport" style="width:28px; height:28px;">
+        Mountain Passport
+    </a>
  
     <ul class="navbar-nav">
         <li><a href="{% url 'home' %}">Home</a></li>
