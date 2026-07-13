@@ -26,6 +26,30 @@ def gruppo_richiesto(nome_gruppo):
         return wrapper
     return decorator
 
+# ─── UTILITY PRENOTAZIONI ─────────────────────────────────────────────────────
+
+def aggiorna_posti_disponibili(rifugio):
+    """
+    Restituisce al rifugio i posti occupati dalle prenotazioni approvate
+    il cui soggiorno è ormai passato, una sola volta per prenotazione
+    (grazie al flag posti_restituiti).
+    """
+    from django.db.models import Sum
+
+    prenotazioni_scadute = Prenotazione.objects.filter(
+        rifugio=rifugio,
+        stato='approvata',
+        data_partenza__lt=date.today(),
+        posti_restituiti=False
+    )
+
+    totale = prenotazioni_scadute.aggregate(tot=Sum('num_ospiti'))['tot'] or 0
+
+    if totale:
+        rifugio.posti_disponibili = min(rifugio.posti_letto, rifugio.posti_disponibili + totale)
+        rifugio.save()
+        prenotazioni_scadute.update(posti_restituiti=True)
+
 # ─── FORM REGISTRAZIONE ───────────────────────────────────────────────────────
 
 class RegisterForm(UserCreationForm):
@@ -168,6 +192,7 @@ def home(request):
 
 def rifugio(request, pk):
     r = get_object_or_404(Rifugio, pk=pk)
+    aggiorna_posti_disponibili(r)
     recensioni = Recensione.objects.filter(rifugio=r).select_related('escursionista').order_by('-data')
 
     prenotazione = None
@@ -495,8 +520,11 @@ def modifica_profilo(request):
 @gruppo_richiesto('GestoreRifugio')
 def dashboard_gestore(request):
     rifugi = Rifugio.objects.filter(gestore=request.user)
+    for r in rifugi:
+        aggiorna_posti_disponibili(r)
     prenotazioni = Prenotazione.objects.filter(
-        rifugio__gestore=request.user
+        rifugio__gestore=request.user,
+        data_partenza__gte=date.today()
     ).select_related('escursionista', 'rifugio').order_by('-id')
     eventi = Evento.objects.filter(rifugio__gestore=request.user, data__gte=date.today()).prefetch_related('iscrizioni__escursionista').order_by('data')
 
@@ -662,4 +690,3 @@ def pannello_admin(request):
         'rifugi_in_attesa': rifugi_in_attesa,
         'rifugi_tutti': rifugi_tutti,
     })
-

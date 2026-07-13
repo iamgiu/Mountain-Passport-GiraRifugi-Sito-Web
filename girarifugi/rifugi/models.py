@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
+from datetime import date
 import uuid
 
 class Rifugio(models.Model):
@@ -112,7 +113,11 @@ class Prenotazione(models.Model):
     ]
     stato = models.CharField(max_length=20, choices=STATO_CHOICES, default='in_attesa')
 
+    posti_restituiti = models.BooleanField(default=False)
+
     def clean(self):
+        if self.data_arrivo and self.data_arrivo < date.today():
+            raise ValidationError("Non puoi prenotare una data già passata.")
         if self.data_arrivo and self.data_partenza:
             if self.data_arrivo >= self.data_partenza:
                 raise ValidationError("La data di arrivo deve essere prima della data di partenza.")

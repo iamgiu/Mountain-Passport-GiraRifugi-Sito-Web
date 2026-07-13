@@ -132,7 +132,7 @@
                     <div class="prenota-grid">
                         <div class="form-group">
                             <label>Data arrivo</label>
-                            <input type="date" name="data_arrivo" required>
+                            <input type="date" name="data_arrivo" min="{% now 'Y-m-d' %}" required>
                         </div>
                         <div class="form-group">
                             <label>Data partenza</label>
@@ -152,7 +152,7 @@
             <div class="prenota-grid">
                 <div class="form-group">
                     <label>Data arrivo</label>
-                    <input type="date" name="data_arrivo" required>
+                    <input type="date" name="data_arrivo" min="{% now 'Y-m-d' %}" required>
                 </div>
                 <div class="form-group">
                     <label>Data partenza</label>
