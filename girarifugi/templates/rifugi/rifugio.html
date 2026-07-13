@@ -127,7 +127,7 @@
                         <span>Puoi inviare una nuova richiesta</span>
                     </div>
                 </div>
-                <form method="post" action="{% url 'prenota' rifugio.pk %}" style="margin-top:1rem;">
+                    <form method="post" action="{% url 'prenota' rifugio.pk %}" style="margin-top:1rem;" novalidate>
                     {% csrf_token %}
                     <div class="prenota-grid">
                         <div class="form-group">
@@ -147,7 +147,7 @@
                 </form>
             {% endif %}
         {% else %}
-        <form method="post" action="{% url 'prenota' rifugio.pk %}">
+        <form method="post" action="{% url 'prenota' rifugio.pk %}" novalidate>
             {% csrf_token %}
             <div class="prenota-grid">
                 <div class="form-group">
@@ -234,4 +234,143 @@
         {% endif %}
     {% endif %}
 </div>
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const inputArrivi = document.querySelectorAll('input[name="data_arrivo"]');
+
+    inputArrivi.forEach(function (inputArrivo) {
+        const form = inputArrivo.closest('form');
+        if (!form) return;
+
+        const inputPartenza = form.querySelector('input[name="data_partenza"]');
+        if (!inputPartenza) return;
+
+        let avviso = form.querySelector('.avviso-errore');
+        if (!avviso) {
+            avviso = document.createElement('div');
+            avviso.className = 'avviso-errore';
+            avviso.style.display = 'none';
+            inputPartenza.insertAdjacentElement('afterend', avviso);
+        }
+
+        function mostraErrore(messaggio) {
+            avviso.textContent = messaggio;
+            avviso.style.display = 'block';
+        }
+
+        function nascondiErrore() {
+            avviso.style.display = 'none';
+            avviso.textContent = '';
+        }
+
+        function dataCompleta(valore) {
+            return /^\d{4}-\d{2}-\d{2}$/.test(valore);
+        }
+
+        function dataEsiste(valore) {
+            if (!dataCompleta(valore)) return false;
+            const [anno, mese, giorno] = valore.split('-').map(Number);
+            const d = new Date(valore);
+            return (
+                d.getUTCFullYear() === anno &&
+                d.getUTCMonth() + 1 === mese &&
+                d.getUTCDate() === giorno
+            );
+        }
+
+        function oggiSenzaOra() {
+            const oggi = new Date();
+            oggi.setHours(0, 0, 0, 0);
+            return oggi;
+        }
+
+        function validaDate() {
+            nascondiErrore();
+
+            // Controllo preliminare: l'utente ha scritto qualcosa di non interpretabile come data?
+            if (inputArrivo.validity.badInput) {
+                mostraErrore('La data di arrivo inserita non è valida.');
+                return false;
+            }
+            if (inputPartenza.validity.badInput) {
+                mostraErrore('La data di partenza inserita non è valida.');
+                return false;
+            }
+
+            const arrivo = inputArrivo.value;
+            const partenza = inputPartenza.value;
+
+            if (!arrivo || !partenza) {
+                return true;
+            }
+
+            if (!dataEsiste(arrivo)) {
+                mostraErrore('La data di arrivo inserita non è valida.');
+                inputArrivo.value = '';
+                return false;
+            }
+            if (!dataEsiste(partenza)) {
+                mostraErrore('La data di partenza inserita non è valida.');
+                inputPartenza.value = '';
+                return false;
+            }
+
+            const dataArrivo = new Date(arrivo);
+            if (dataArrivo < oggiSenzaOra()) {
+                mostraErrore('La data di arrivo non può essere nel passato.');
+                inputArrivo.value = '';
+                return false;
+            }
+
+            const dataPartenza = new Date(partenza);
+            if (dataPartenza <= dataArrivo) {
+                mostraErrore('La data di partenza deve essere successiva alla data di arrivo.');
+                inputPartenza.value = '';
+                return false;
+            }
+
+            return true;
+        }
+
+        function validaSubmit() {
+            nascondiErrore();
+
+            if (inputArrivo.validity.badInput) {
+                mostraErrore('La data di arrivo inserita non è valida.');
+                return false;
+            }
+            if (inputPartenza.validity.badInput) {
+                mostraErrore('La data di partenza inserita non è valida.');
+                return false;
+            }
+
+            const arrivo = inputArrivo.value;
+            const partenza = inputPartenza.value;
+
+            if (!arrivo) {
+                mostraErrore('Inserisci la data di arrivo.');
+                return false;
+            }
+            if (!partenza) {
+                mostraErrore('Inserisci la data di partenza.');
+                return false;
+            }
+
+            return validaDate();
+        }
+
+        inputArrivo.addEventListener('blur', validaDate);
+        inputPartenza.addEventListener('blur', validaDate);
+
+        form.addEventListener('submit', function (event) {
+            if (!validaSubmit()) {
+                event.preventDefault();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+
 {% endblock %}

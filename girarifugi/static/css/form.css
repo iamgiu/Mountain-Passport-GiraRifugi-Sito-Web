@@ -28,3 +28,14 @@
 .form-group textarea:focus { border-color: var(--green); }
 .form-group .helptext { font-size: 0.78rem; color: var(--gray); margin-top: 0.25rem; }
 .errorlist { color: #c0392b; font-size: 0.82rem; margin-top: 0.25rem; list-style: none; }
+
+.avviso-errore {
+    color: #b00020;
+    background-color: #fdecea;
+    border: 1px solid #b00020;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-top: 6px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+}
