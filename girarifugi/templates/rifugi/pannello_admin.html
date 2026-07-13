@@ -55,24 +55,40 @@
 </div>
 {% endfor %}
 
-<!-- ══ MODIFICA ALTITUDINE RIFUGI ══ -->
-<h2 class="section-title">Modifica punti rifugi</h2>
-
 {% for r in rifugi_tutti %}
 <div class="card">
     <div style="flex:1;">
         <h3>{{ r.nome }}</h3>
         <p>{{ r.regione }} — {{ r.tipo }}</p>
+        <p style="font-size:0.85rem; color:var(--gray);">
+            {% if r.mensile %}
+                Punti: <strong>{% widthratio r.altitudine 1 2 %}</strong> (x2)
+            {% else %}
+                Punti: <strong>{{ r.altitudine }}</strong>
+            {% endif %}
+        </p>
     </div>
-    <form method="post" style="display:flex; align-items:center; gap:0.5rem;">
-        {% csrf_token %}
-        <input type="hidden" name="azione" value="modifica_altitudine">
-        <input type="hidden" name="rifugio_pk" value="{{ r.pk }}">
-        <div class="form-group" style="margin:0;">
-            <input type="number" name="altitudine" value="{{ r.altitudine }}" style="width:100px;">
-        </div>
-        <button type="submit" class="btn btn-outline btn-sm">Salva</button>
-    </form>
+    <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+        <form method="post" style="display:flex; align-items:center; gap:0.5rem;">
+            {% csrf_token %}
+            <input type="hidden" name="azione" value="modifica_altitudine">
+            <input type="hidden" name="rifugio_pk" value="{{ r.pk }}">
+            <div class="form-group" style="margin:0;">
+                <input type="number" name="altitudine" value="{{ r.altitudine }}" style="width:100px;">
+            </div>
+            <button type="submit" class="btn btn-outline btn-sm">Salva</button>
+        </form>
+        <form method="post" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="azione" value="toggle_mensile">
+            <input type="hidden" name="rifugio_pk" value="{{ r.pk }}">
+            {% if r.mensile %}
+                <button type="submit" class="btn btn-danger btn-sm">Togli da mensile</button>
+            {% else %}
+                <button type="submit" class="btn btn-primary btn-sm">Rendi mensile</button>
+            {% endif %}
+        </form>
+    </div>
 </div>
 {% empty %}
 <div class="empty-state">

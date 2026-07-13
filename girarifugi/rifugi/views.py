@@ -28,6 +28,10 @@ def gruppo_richiesto(nome_gruppo):
 
 # ─── UTILITY PRENOTAZIONI ─────────────────────────────────────────────────────
 
+def punti_rifugio(rifugio):
+    """I rifugi mensili valgono doppi punti."""
+    return rifugio.altitudine * 2 if rifugio.mensile else rifugio.altitudine
+
 def aggiorna_posti_disponibili(rifugio):
     """
     Restituisce al rifugio i posti occupati dalle prenotazioni approvate
@@ -92,7 +96,7 @@ def register(request):
 def home(request):
 
     # Variabili comuni sempre calcolate
-    rifugi_mensili = Rifugio.objects.filter(stato='approvato').order_by('-id')[:10]
+    rifugi_mensili = Rifugio.objects.filter(stato='approvato', mensile=True)
     rifugi_casuali = Rifugio.objects.filter(stato='approvato').order_by('?')[:10]
     rifugi_in_attesa_count = Rifugio.objects.filter(stato='in_attesa').count()
 
@@ -147,7 +151,7 @@ def home(request):
             escursionisti = AuthUser.objects.filter(groups__name='Escursionista')
             for u in escursionisti:
                 visite = Visita.objects.filter(escursionista=u).select_related('rifugio')
-                punti = sum(v.rifugio.altitudine for v in visite)
+                punti = sum(punti_rifugio(v.rifugio) for v in visite)
                 classifica_rapida.append({
                     'username': u.username,
                     'punti': punti,
@@ -356,7 +360,7 @@ def checkin(request, uuid):
     if created:
         # Prima visita — crea il timbro
         Timbro.objects.create(visita=visita)
-        messages.success(request, f'Check-in effettuato! Hai guadagnato {rifugio.altitudine} punti!')
+        messages.success(request, f'Check-in effettuato! Hai guadagnato {punti_rifugio(rifugio)} punti!')
     else:
         messages.info(request, f'Hai già visitato {rifugio.nome}!')
 
@@ -371,7 +375,7 @@ def passaporto(request):
     prenotazioni = Prenotazione.objects.filter(escursionista=request.user)
     preferiti_qs = Preferito.objects.filter(escursionista=request.user)
 
-    punti_totali = sum(v.rifugio.altitudine for v in visite)
+    punti_totali = sum(punti_rifugio(v.rifugio) for v in visite)
 
     attivita = []
     trenta_giorni_fa = timezone.now() - timedelta(days=30)
@@ -463,7 +467,7 @@ def checkin(request):
             )
             if created:
                 Timbro.objects.create(visita=visita)
-                messages.success(request, f'Check-in effettuato al {rifugio.nome}! +{rifugio.altitudine} punti!')
+                messages.success(request, f'Check-in effettuato al {rifugio.nome}! +{punti_rifugio(rifugio)} punti!')
             else:
                 messages.info(request, f'Hai già il timbro per {rifugio.nome}!')
 
@@ -656,7 +660,7 @@ def pannello_admin(request):
     classifica = []
     for u in escursionisti:
         visite = Visita.objects.filter(escursionista=u).select_related('rifugio')
-        punti = sum(v.rifugio.altitudine for v in visite)
+        punti = sum(punti_rifugio(v.rifugio) for v in visite)
         classifica.append({
             'username': u.username,
             'email': u.email,
@@ -683,10 +687,23 @@ def pannello_admin(request):
                 r.altitudine = int(nuova)
                 r.save()
                 messages.success(request, f'Altitudine di {r.nome} aggiornata!')
+        elif azione == 'toggle_mensile':
+            if r.mensile:
+                r.mensile = False
+                r.save()
+                messages.info(request, f'{r.nome} rimosso dai rifugi mensili.')
+            else:
+                if Rifugio.objects.filter(mensile=True).count() >= 5:
+                    messages.error(request, 'Hai già raggiunto il massimo di 5 rifugi mensili. Rimuovine uno prima di aggiungerne un altro.')
+                else:
+                    r.mensile = True
+                    r.save()
+                    messages.success(request, f'{r.nome} aggiunto ai rifugi mensili!')
 
         return redirect('pannello_admin')
 
     return render(request, 'rifugi/pannello_admin.html', {
         'rifugi_in_attesa': rifugi_in_attesa,
         'rifugi_tutti': rifugi_tutti,
+        'num_mensili': Rifugio.objects.filter(mensile=True).count(),
     })

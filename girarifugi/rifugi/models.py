@@ -13,6 +13,7 @@ class Rifugio(models.Model):
     latitudine = models.FloatField()
     longitudine = models.FloatField()
     regione = models.CharField(max_length=100)
+    mensile = models.BooleanField(default=False)
 
     TIPO_CHOICES = [
         ('RIFUGIO', 'Rifugio'),
