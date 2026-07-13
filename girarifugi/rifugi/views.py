@@ -147,13 +147,18 @@ def home(request):
             itinerari_guida = Itinerario.objects.filter(guida=request.user, data__gte=date.today()).order_by('data')
 
         elif nome_gruppo == 'Admin' or request.user.is_superuser:
-            # Leaderboard rapida top 5
+            now = timezone.now()
             escursionisti = AuthUser.objects.filter(groups__name='Escursionista')
             for u in escursionisti:
-                visite = Visita.objects.filter(escursionista=u).select_related('rifugio')
+                visite = Visita.objects.filter(
+                    escursionista=u,
+                    data_visita__year=now.year,
+                    data_visita__month=now.month
+                ).select_related('rifugio')
                 punti = sum(punti_rifugio(v.rifugio) for v in visite)
                 classifica_rapida.append({
                     'username': u.username,
+                    'email': u.email,
                     'punti': punti,
                     'num_visite': visite.count()
                 })
@@ -167,10 +172,11 @@ def home(request):
             if request.method == 'POST' and request.POST.get('azione') == 'crea_utente':
                 username = request.POST.get('username')
                 password = request.POST.get('password')
+                email = request.POST.get('email', '')
                 ruolo = request.POST.get('ruolo')
                 if username and password and ruolo:
                     if not AuthUser.objects.filter(username=username).exists():
-                        nuovo = AuthUser.objects.create_user(username=username, password=password)
+                        nuovo = AuthUser.objects.create_user(username=username, password=password, email=email)
                         gruppo_obj = Group.objects.get(name=ruolo)
                         nuovo.groups.add(gruppo_obj)
                         messages.success(request, f'Utente {username} creato come {ruolo}!')
@@ -193,6 +199,11 @@ def home(request):
         'nome': nome, 'regione': regione,
         'quota_min': quota_min, 'quota_max': quota_max,
     })
+
+def visite_mese_corrente(queryset_visite):
+    """Filtra un queryset di Visita al solo mese corrente."""
+    now = timezone.now()
+    return queryset_visite.filter(data_visita__year=now.year, data_visita__month=now.month)
 
 def rifugio(request, pk):
     r = get_object_or_404(Rifugio, pk=pk)
@@ -375,7 +386,9 @@ def passaporto(request):
     prenotazioni = Prenotazione.objects.filter(escursionista=request.user)
     preferiti_qs = Preferito.objects.filter(escursionista=request.user)
 
-    punti_totali = sum(punti_rifugio(v.rifugio) for v in visite)
+    now = timezone.now()
+    visite_mese = visite.filter(data_visita__year=now.year, data_visita__month=now.month)
+    punti_totali = sum(punti_rifugio(v.rifugio) for v in visite_mese)
 
     attivita = []
     trenta_giorni_fa = timezone.now() - timedelta(days=30)
@@ -656,10 +669,15 @@ def pannello_admin(request):
     rifugi_in_attesa = Rifugio.objects.filter(stato='in_attesa').select_related('gestore')
     rifugi_tutti = Rifugio.objects.filter(stato='approvato').order_by('-id')
 
+    now = timezone.now()
     escursionisti = User.objects.filter(groups__name='Escursionista')
     classifica = []
     for u in escursionisti:
-        visite = Visita.objects.filter(escursionista=u).select_related('rifugio')
+        visite = Visita.objects.filter(
+            escursionista=u,
+            data_visita__year=now.year,
+            data_visita__month=now.month
+        ).select_related('rifugio')
         punti = sum(punti_rifugio(v.rifugio) for v in visite)
         classifica.append({
             'username': u.username,
@@ -706,4 +724,5 @@ def pannello_admin(request):
         'rifugi_in_attesa': rifugi_in_attesa,
         'rifugi_tutti': rifugi_tutti,
         'num_mensili': Rifugio.objects.filter(mensile=True).count(),
+        'classifica': classifica,
     })
