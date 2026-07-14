@@ -19,8 +19,13 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+# Lista principale che rappresenta gli URl del sito alle relative funzioni/viste
+# Quando l'utente va su www.sito.com/admin/ Django apre il pannello di amministrazione 
+# Include il sistema di autenticazione di Django, quindi gestisce in automatico i login/logout
+# La stringa vuota indica la pagina iniziale e poi delega la gestione di tutti gli altri percorsi al file urls.py dell'applicazione interna
+# Infine dice a Django come trovare e mostrare i file multimediali
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('accounts/', include('django.contrib.auth.urls')),  # login/logout gratis da Django
-    path('', include('rifugi.urls')),  # le tue pagine
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('', include('rifugi.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -47,16 +47,16 @@
 
 <!-- TIMBRI -->
 <h2 class="section-title">I tuoi timbri</h2>
-{% if visite %}
+{% if timbri %}
 <div class="timbri-grid">
-    {% for visita in visite %}
-    <a href="{% url 'rifugio' visita.rifugio.pk %}" class="timbro-card">
+    {% for timbro in timbri %}
+    <a href="{% url 'rifugio' timbro.rifugio.pk %}" class="timbro-card">
         <div class="timbro-icon">
             <span class="material-icons">landscape</span>
         </div>
-        <p class="timbro-nome">{{ visita.rifugio.nome }}</p>
-        <p class="timbro-data">{{ visita.data_visita|date:"d/m/Y" }}</p>
-        <p class="timbro-punti">+{{ visita.rifugio.altitudine }} pt</p>
+        <p class="timbro-nome">{{ timbro.rifugio.nome }}</p>
+        <p class="timbro-data">{{ timbro.data_assegnazione|date:"d/m/Y" }}</p>
+        <p class="timbro-punti">+{{ timbro.rifugio.altitudine }} pt</p>
     </a>
     {% endfor %}
 </div>

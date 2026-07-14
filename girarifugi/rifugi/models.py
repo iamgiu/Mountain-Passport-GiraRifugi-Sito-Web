@@ -5,8 +5,10 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from datetime import date
 import uuid
 
+# MODELLO: RIFUGIO
 class Rifugio(models.Model):
 
+    # Informazioni generali e geografiche
     nome = models.CharField(max_length=200)
     localita = models.CharField(max_length=200)
     altitudine = models.IntegerField()
@@ -15,6 +17,7 @@ class Rifugio(models.Model):
     regione = models.CharField(max_length=100)
     mensile = models.BooleanField(default=False)
 
+    # Tipologia di struttura
     TIPO_CHOICES = [
         ('RIFUGIO', 'Rifugio'),
         ('BIVACCO', 'Bivacco'),
@@ -22,18 +25,21 @@ class Rifugio(models.Model):
     ]
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='RIFUGIO')
 
+    # Dettagli
     descrizione = models.TextField(blank=True)
-    posti_letto = models.IntegerField(default=0)
-    posti_disponibili = models.IntegerField(default=0)
+    posti_letto = models.IntegerField(default=0)    # Posti letto totali
+    posti_disponibili = models.IntegerField(default=0)  # Posti liberi attuali (si aggiorna dinamicamente)
     immagine = models.ImageField(upload_to='rifugi/', blank=True, null=True)
-    qr_uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    qr_uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False) # Identificativo univoco per la generazione di QR code per convalidare la visita sul posto di un escursionista
 
+    # Mi controlla se il mio rifugio è in attesa o è stato approvata dall'admin
     STATO_CHOICES = [
         ('in_attesa', 'In attesa'),
         ('approvato', 'Approvato'),
     ]
     stato = models.CharField(max_length=20, choices=STATO_CHOICES, default='in_attesa')
 
+    # Mi crea una relazione tra il modello del Rifugio e la tabella degli utenti di Django
     gestore = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -43,11 +49,13 @@ class Rifugio(models.Model):
     )
 
     class Meta:
-        verbose_name_plural = "Rifugi"
+        verbose_name_plural = "Rifugi"  # Corregge automaticamente il plurale
 
     def __str__(self):
         return f"{self.nome} ({self.regione})"
     
+# MODELLO: VISITA
+# Registra il checkin di un escursionista in un determinato rifugio
 class Visita(models.Model):
 
     escursionista = models.ForeignKey (
@@ -62,32 +70,36 @@ class Visita(models.Model):
         related_name='visite'
     )
 
-    data_visita = models.DateTimeField(auto_now_add=True)
+    data_visita = models.DateTimeField(auto_now_add=True)   # Imposta automaticamente data e ora
 
     class Meta:
         verbose_name_plural = "Visite"
-        unique_together = ('escursionista', 'rifugio')
-
 
     def __str__(self):
         return f"{self.escursionista.username} ({self.rifugio.nome})"
     
 class Timbro(models.Model):
 
-    visita = models.OneToOneField(
-        Visita,
+    escursionista = models.ForeignKey(
+        User,
         on_delete=models.CASCADE,
-        related_name='timbro'
+        related_name='timbri'
+    )
+
+    rifugio = models.ForeignKey(
+        Rifugio,
+        on_delete=models.CASCADE,
+        related_name='timbri'
     )
 
     data_assegnazione = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name_plural = "Timbri"
+        unique_together = ('escursionista', 'rifugio')
 
     def __str__(self):
-        return f"Timbro: {self.visita.rifugio.nome} - {self.visita.escursionista.username}"
-    
+        return f"Timbro: {self.rifugio.nome} - {self.escursionista.username}"
 
 class Prenotazione(models.Model):
 

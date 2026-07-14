@@ -11,26 +11,25 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
-import os               #    Modulo standard Python per lavorare con i percorsi del filesystem
+import os               # Modulo standard Python per lavorare con i percorsi del filesystem
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# BASE_DIR è la cartella radice del progetto e viene usata come riferitmento per costruire tutti gli altri percorsi
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# SECRET_KEY è usata da Django per firlmare cookie, sessioni, token ecc. e non va nel codice sorgente
 SECRET_KEY = 'django-insecure-&!5qp*q=2%xchy30u2-llq0+u=d8k2uob@i0bs8_bo$bi2oib6'
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# DEBUG = True mostra pagine di errore dettagliate ed è da tenere False in produzione altrimenti fa vedere informazioni sensibili
 DEBUG = True
 
+# Sarebbe la lista dei domini, ma è vuota essendo che lavoro in locale
 ALLOWED_HOSTS = []
 
-
-# Application definition
-
+# Elenco delle app installate nel progetto
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -41,6 +40,7 @@ INSTALLED_APPS = [
     'rifugi',
 ]
 
+# Componenti che elaborano ogni richiesta o risposta
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -51,8 +51,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# File in cui Django cerca la configurazione degli URL ovvero urls.py
 ROOT_URLCONF = 'girarifugi.urls'
 
+# Configurazione dei template ovvero i file HTML
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -68,12 +70,13 @@ TEMPLATES = [
     },
 ]
 
+# E' uno standard/protocollo che fa da ponte tra il server web e la mia applicazione Django
 WSGI_APPLICATION = 'girarifugi.wsgi.application'
 
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
+# Configurazione del database: SQLite
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -84,7 +87,7 @@ DATABASES = {
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
+# Regole di validazione applicate quando un utente imposta/cambia la password: impedisce passpord troppo simili a username/email o comuni, impone una lunghezza minima e impedisce che siano formate da soli numeri
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -103,40 +106,41 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
-
+# Lingua predefinita dell'interfaccia
 LANGUAGE_CODE = 'it-it'
-
+# Fuso orario usato per date/ore
 TIME_ZONE = 'Europe/Rome'
-
+# Serve principalmente per i siti multilingua, permette di tradurre il sito in altre lingue: esempio {% trans "Prenota" %} nel template diventerebbe Book in inglese
 USE_I18N = True
-
+# Mi protegge da errori di calcolo con le date quando confronto orari/scadenze come faccio nelle Prenotazioni dei rifugi
 USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
-
-# URL Pubblica da cui Django serve i file statici (CSS, JS, Immagini)
-# Esempio: Es: http://localhost:8000/static/css/style.css
+# I file statici sono i file fissi del progetto ad esempio il favicon e l'url sarebbe il prefisso conn cui il browser richiede questi file
+# Nei template devo scrivere {% load static %}
 STATIC_URL = '/static/'                         
 
-# Lista di cartelle dove Django cerca i file statici
+# Mi dice in quali cartelle andare a cercare i file statici
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
-# URL Pubblica da cui vengono serviti i file caricati dagli utenti
+# Sono i file caricati dagli utenti durante l'uso del sito come le foto dei rifugi, anche qui l'url è il prefisso con cui il browser richieste questi file
 # Esesempio: http://localhost:8000/media/foto_rifugio.jpg
+# Rispetto ai file stati questi cambiano dinamicamente mentre il sito è in uso
 MEDIA_URL = '/media/'
 
-# Percorso fisico sul disco dove Django salva i file caricaticati dall'utente
+# Mi dice in quali cartelle andare a cercare i file media
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Redirect dopo il login - va alla home
+# Redirect legati al login/logout
+# Queste impostazioni dicono a Django dove mandare l'utente prima/dopo l'autenticazione
+
+# Dopo un login riuscito l'utente viene reindirizzato alla home page del sito
 LOGIN_REDIRECT_URL = '/'
 
-# Se si prova ad accendere a una pagina senza essere loggati Django reindirizza al login
+# Se un utente non è loggato e prova ad accedere a una pagina protetta allora Django lo riporta alla pagina del login
 LOGIN_URL = '/accounts/login/'
 
-# Redirect dopo il logout - torna alla home
+# Dopo il logout l'utente viene riportato alla home page
 LOGOUT_REDIRECT_URL = '/'
-
-

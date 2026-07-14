@@ -398,7 +398,8 @@ def check_username(request):
 
 @gruppo_richiesto('Escursionista')
 def passaporto(request):
-    visite = Visita.objects.filter(escursionista=request.user).select_related('rifugio', 'timbro').order_by('-data_visita')
+    visite = Visita.objects.filter(escursionista=request.user).select_related('rifugio').order_by('-data_visita')
+    timbri = Timbro.objects.filter(escursionista=request.user).select_related('rifugio').order_by('-data_assegnazione')
     recensioni = Recensione.objects.filter(escursionista=request.user).select_related('rifugio').order_by('-data')
     prenotazioni = Prenotazione.objects.filter(escursionista=request.user)
     preferiti_qs = Preferito.objects.filter(escursionista=request.user)
@@ -421,6 +422,7 @@ def passaporto(request):
 
     return render(request, 'rifugi/passaporto.html', {
         'visite': visite,
+        'timbri': timbri,
         'recensioni': recensioni,
         'attivita': attivita,
         'punti_totali': punti_totali,
@@ -489,7 +491,6 @@ def checkin(request):
     if request.method == 'POST':
         codice = request.POST.get('codice', '').strip().lower()
         try:
-            # Cerca il rifugio il cui UUID inizia con il codice inserito
             rifugi = Rifugio.objects.filter(stato='approvato')
             rifugio = None
             for r in rifugi:
@@ -501,15 +502,17 @@ def checkin(request):
                 messages.error(request, 'Codice non valido.')
                 return redirect('checkin')
 
-            visita, created = Visita.objects.get_or_create(
-                escursionista=request.user,
-                rifugio=rifugio
-            )
-            if created:
-                Timbro.objects.create(visita=visita)
-                messages.success(request, f'Check-in effettuato al {rifugio.nome}! +{punti_rifugio(rifugio)} punti!')
+            # Ogni checkin crea SEMPRE una nuova Visita → punti garantiti
+            Visita.objects.create(escursionista=request.user, rifugio=rifugio)  # ← questo è andato a buon fine (infatti hai preso i punti)
+
+            _, timbro_nuovo = Timbro.objects.get_or_create(
+                escursionista=request.user, rifugio=rifugio
+            )  # ← questo ha lanciato l'errore, perché il DB non conosce ancora il nuovo campo
+
+            if timbro_nuovo:
+                messages.success(request, f'🎖️ Nuovo timbro conquistato al {rifugio.nome}! +{punti_rifugio(rifugio)} punti!')
             else:
-                messages.info(request, f'Hai già il timbro per {rifugio.nome}!')
+                messages.success(request, f'Check-in registrato al {rifugio.nome}! +{punti_rifugio(rifugio)} punti!')
 
         except Exception as e:
             messages.error(request, f'Errore: {e}')
