@@ -191,3 +191,6 @@
 .rifugio-gestore-body { flex: 1; }
 .rifugio-gestore-body h3 { font-size: 1rem; font-weight: 700; color: var(--blue-dark); margin-bottom: 0.25rem; }
 .rifugio-gestore-body p  { font-size: 0.82rem; color: var(--gray); margin-bottom: 0.4rem; }
+
+.btn-reset { background-color: transparent; color: var(--blue-dark); border: 2px solid var(--white); }
+.btn-reset:hover { background-color: var(--white); color: red; text-decoration: none; }

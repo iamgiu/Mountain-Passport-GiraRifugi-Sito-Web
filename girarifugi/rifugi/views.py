@@ -112,6 +112,11 @@ def home(request):
     gestori = []
     nome = regione = quota_min = quota_max = ''
 
+    # Reset esplicito dei filtri (dal bottone "Reimposta filtri")
+    if request.GET.get('reset') == '1':
+        request.session.pop('filtri', None)
+        return redirect('home')
+
     if request.user.is_authenticated:
         gruppo = request.user.groups.first()
         nome_gruppo = gruppo.name if gruppo else ''
@@ -120,10 +125,22 @@ def home(request):
             preferiti = Preferito.objects.filter(escursionista=request.user).select_related('rifugio')
             rifugi_preferiti = [p.rifugio for p in preferiti]
             rifugi = Rifugio.objects.filter(stato='approvato')
-            nome = request.GET.get('nome', '')
-            regione = request.GET.get('regione', '')
-            quota_min = request.GET.get('quota_min', '')
-            quota_max = request.GET.get('quota_max', '')
+
+            # Se non sono stati passati parametri di ricerca in GET, ripristina
+            # gli ultimi filtri usati salvati in sessione.
+            filtri_sessione = request.session.get('filtri', {})
+            has_query_params = any(k in request.GET for k in ('nome', 'regione', 'quota_min', 'quota_max'))
+            if has_query_params:
+                nome = request.GET.get('nome', '')
+                regione = request.GET.get('regione', '')
+                quota_min = request.GET.get('quota_min', '')
+                quota_max = request.GET.get('quota_max', '')
+            else:
+                nome = filtri_sessione.get('nome', '')
+                regione = filtri_sessione.get('regione', '')
+                quota_min = filtri_sessione.get('quota_min', '')
+                quota_max = filtri_sessione.get('quota_max', '')
+
             visite = Visita.objects.filter(escursionista=request.user).select_related('rifugio')
             if nome: rifugi = rifugi.filter(nome__icontains=nome)
             if regione: rifugi = rifugi.filter(regione__icontains=regione)
@@ -364,31 +381,6 @@ def eventi(request):
         'iscrizioni_utente': iscrizioni_utente,
         'q': q, 'regione': regione, 'dal': dal,
     })
-
-def checkin(request, uuid):
-    rifugio = get_object_or_404(Rifugio, qr_uuid=uuid)
-
-    if not request.user.is_authenticated:
-        return redirect(f'/accounts/login/?next=/checkin/{uuid}/')
-
-    if not request.user.groups.filter(name='Escursionista').exists():
-        messages.error(request, 'Solo gli escursionisti possono fare il check-in.')
-        return redirect('rifugio', pk=rifugio.pk)
-
-    # Controlla se ha già visitato
-    visita, created = Visita.objects.get_or_create(
-        escursionista=request.user,
-        rifugio=rifugio
-    )
-
-    if created:
-        # Prima visita — crea il timbro
-        Timbro.objects.create(visita=visita)
-        messages.success(request, f'Check-in effettuato! Hai guadagnato {punti_rifugio(rifugio)} punti!')
-    else:
-        messages.info(request, f'Hai già visitato {rifugio.nome}!')
-
-    return redirect('rifugio', pk=rifugio.pk)
 
 def check_username(request):
     username = request.GET.get('username', '').strip()
