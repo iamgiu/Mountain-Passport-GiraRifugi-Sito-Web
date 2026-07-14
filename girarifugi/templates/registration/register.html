@@ -26,4 +26,155 @@
         Hai già un account? <a href="/accounts/login/">Accedi</a>
     </p>
 </div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ─── MOSTRA/NASCONDI PASSWORD ─────────────────────────────
+    function aggiungiToggle(input) {
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'relative';
+        input.parentNode.insertBefore(wrapper, input);
+        wrapper.appendChild(input);
+        input.style.paddingRight = '40px';
+
+        const icona = document.createElement('span');
+        icona.className = 'material-icons';
+        icona.textContent = 'visibility_off';
+        icona.style.position = 'absolute';
+        icona.style.right = '10px';
+        icona.style.top = '50%';
+        icona.style.transform = 'translateY(-50%)';
+        icona.style.cursor = 'pointer';
+        icona.style.color = 'var(--gray)';
+        icona.style.fontSize = '1.2rem';
+        wrapper.appendChild(icona);
+
+        icona.addEventListener('click', function () {
+            if (input.type === 'password') {
+                input.type = 'text';
+                icona.textContent = 'visibility';
+            } else {
+                input.type = 'password';
+                icona.textContent = 'visibility_off';
+            }
+        });
+
+        return wrapper;
+    }
+
+    const wrapperDiPassword = {};
+    document.querySelectorAll('input[type="password"]').forEach(function (input) {
+        wrapperDiPassword[input.id] = aggiungiToggle(input);
+    });
+
+    // ─── INDICATORE FORZA PASSWORD ─────────────────────────────
+    const inputPassword1 = document.getElementById('id_password1');
+    if (inputPassword1) {
+        const barraForza = document.createElement('div');
+        barraForza.id = 'barra-forza-password';
+        barraForza.style.marginTop = '6px';
+        barraForza.style.fontSize = '0.8rem';
+        barraForza.style.fontFamily = "'Montserrat', sans-serif";
+        wrapperDiPassword['id_password1'].insertAdjacentElement('afterend', barraForza);
+
+        function calcolaForza(valore) {
+            let punteggio = 0;
+            if (valore.length >= 8) punteggio++;
+            if (valore.length >= 12) punteggio++;
+            if (/[A-Z]/.test(valore)) punteggio++;
+            if (/[0-9]/.test(valore)) punteggio++;
+            if (/[^A-Za-z0-9]/.test(valore)) punteggio++;
+            return punteggio;
+        }
+
+        inputPassword1.addEventListener('input', function () {
+            const valore = inputPassword1.value;
+            if (!valore) {
+                barraForza.textContent = '';
+                return;
+            }
+            const punteggio = calcolaForza(valore);
+            let testo, colore;
+            if (punteggio <= 2) {
+                testo = 'Debole';
+                colore = '#b00020';
+            } else if (punteggio <= 3) {
+                testo = 'Media';
+                colore = '#d97706';
+            } else {
+                testo = 'Forte';
+                colore = 'var(--green-dark)';
+            }
+            barraForza.textContent = 'Sicurezza password: ' + testo;
+            barraForza.style.color = colore;
+        });
+    }
+
+    // ─── VERIFICA CORRISPONDENZA PASSWORD ─────────────────────────
+    const inputPassword2 = document.getElementById('id_password2');
+    if (inputPassword1 && inputPassword2) {
+        const avvisoMatch = document.createElement('div');
+        avvisoMatch.id = 'avviso-match-password';
+        avvisoMatch.style.fontSize = '0.8rem';
+        avvisoMatch.style.marginTop = '4px';
+        avvisoMatch.style.fontFamily = "'Montserrat', sans-serif";
+        wrapperDiPassword['id_password2'].insertAdjacentElement('afterend', avvisoMatch);
+
+        function verificaMatch() {
+            if (!inputPassword2.value) {
+                avvisoMatch.textContent = '';
+                return;
+            }
+            if (inputPassword1.value === inputPassword2.value) {
+                avvisoMatch.textContent = '✓ Le password coincidono';
+                avvisoMatch.style.color = 'var(--green-dark)';
+            } else {
+                avvisoMatch.textContent = '✗ Le password non coincidono';
+                avvisoMatch.style.color = '#b00020';
+            }
+        }
+
+        inputPassword1.addEventListener('input', verificaMatch);
+        inputPassword2.addEventListener('input', verificaMatch);
+    }
+
+    // ─── CONTROLLO USERNAME GIÀ ESISTENTE (Fetch API) ─────────────
+    const inputUsername = document.getElementById('id_username');
+    if (inputUsername) {
+        const avvisoUsername = document.createElement('div');
+        avvisoUsername.id = 'avviso-username';
+        avvisoUsername.style.fontSize = '0.8rem';
+        avvisoUsername.style.marginTop = '4px';
+        avvisoUsername.style.fontFamily = "'Montserrat', sans-serif";
+        inputUsername.closest('.form-group').appendChild(avvisoUsername);
+
+        inputUsername.addEventListener('blur', function () {
+            const valore = inputUsername.value.trim();
+            if (!valore) {
+                avvisoUsername.textContent = '';
+                return;
+            }
+            fetch('{% url "check_username" %}?username=' + encodeURIComponent(valore))
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    if (data.esiste) {
+                        avvisoUsername.textContent = '✗ Username già in uso';
+                        avvisoUsername.style.color = '#b00020';
+                    } else {
+                        avvisoUsername.textContent = '✓ Username disponibile';
+                        avvisoUsername.style.color = 'var(--green-dark)';
+                    }
+                })
+                .catch(function (error) {
+                    console.error('Errore controllo username:', error);
+                });
+        });
+    }
+
+});
+</script>
+{% endblock %}
+
 {% endblock %}

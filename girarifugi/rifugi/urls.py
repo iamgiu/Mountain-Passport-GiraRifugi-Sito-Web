@@ -18,4 +18,5 @@ urlpatterns = [
     path('rifugi/<int:pk>/recensione/', views.scrivi_recensione, name='scrivi_recensione'),
     path('profilo/modifica/', views.modifica_profilo, name='modifica_profilo'),
     path('eventi/<int:pk>/iscriviti/', views.iscriviti_evento, name='iscriviti_evento'),
+    path('check-username/', views.check_username, name='check_username'),
 ]

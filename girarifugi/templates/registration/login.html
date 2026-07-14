@@ -23,4 +23,43 @@
         Non hai un account? <a href="{% url 'register' %}">Registrati gratis</a>
     </p>
 </div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    function aggiungiToggle(input) {
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'relative';
+        input.parentNode.insertBefore(wrapper, input);
+        wrapper.appendChild(input);
+        input.style.paddingRight = '40px';
+
+        const icona = document.createElement('span');
+        icona.className = 'material-icons';
+        icona.textContent = 'visibility_off';
+        icona.style.position = 'absolute';
+        icona.style.right = '10px';
+        icona.style.top = '50%';
+        icona.style.transform = 'translateY(-50%)';
+        icona.style.cursor = 'pointer';
+        icona.style.color = 'var(--gray)';
+        icona.style.fontSize = '1.2rem';
+        wrapper.appendChild(icona);
+
+        icona.addEventListener('click', function () {
+            if (input.type === 'password') {
+                input.type = 'text';
+                icona.textContent = 'visibility';
+            } else {
+                input.type = 'password';
+                icona.textContent = 'visibility_off';
+            }
+        });
+    }
+
+    document.querySelectorAll('input[type="password"]').forEach(aggiungiToggle);
+});
+</script>
+{% endblock %}
+
 {% endblock %}

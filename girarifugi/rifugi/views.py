@@ -390,6 +390,13 @@ def checkin(request, uuid):
 
     return redirect('rifugio', pk=rifugio.pk)
 
+def check_username(request):
+    username = request.GET.get('username', '').strip()
+    esiste = False
+    if username:
+        esiste = AuthUser.objects.filter(username__iexact=username).exists()
+    return JsonResponse({'esiste': esiste})
+
 # ─── VISTE RISTRETTE ──────────────────────────────────────────────────────────
 
 @gruppo_richiesto('Escursionista')
