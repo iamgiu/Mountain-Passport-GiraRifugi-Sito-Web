@@ -55,6 +55,23 @@
 </div>
 {% endfor %}
 
+<h2 class="home-section-title">Rifugi approvati</h2>
+
+<div class="card" style="display:block; margin-bottom:1.5rem;">
+    <form method="get" action="{% url 'pannello_admin' %}">
+        <div class="prenota-grid">
+            <div class="form-group">
+                <label>Cerca per nome o regione</label>
+                <input type="text" name="cerca_admin" value="{{ cerca_admin }}" placeholder="Es. Locatelli, Piemonte...">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Cerca</button>
+        {% if cerca_admin %}
+        <a href="{% url 'pannello_admin' %}" class="btn btn-reset">Reimposta filtri</a>
+        {% endif %}
+    </form>
+</div>
+
 {% for r in rifugi_tutti %}
 <div class="card">
     <div style="flex:1;">

@@ -206,15 +206,14 @@ class Recensione(models.Model):
     testo = models.TextField()
 
     voto = models.IntegerField(
-
         validators=[MinValueValidator(1), MaxValueValidator(5)]
-
     )
 
     data = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         verbose_name_plural = "Recensioni"
+        unique_together = ('escursionista', 'rifugio')
 
     def __str__(self):
         return f"{self.escursionista.username} - {self.rifugio.nome} ({self.voto}/5)"
@@ -232,6 +231,13 @@ class Preferito(models.Model):
         on_delete=models.CASCADE,
         related_name='preferiti'
     )
+
+    class Meta:
+        verbose_name_plural = "Preferiti"
+        unique_together = ('escursionista', 'rifugio')
+
+    def __str__(self):
+        return f"{self.escursionista.username} — {self.rifugio.nome}"
     
 class Evento(models.Model):
     rifugio = models.ForeignKey(

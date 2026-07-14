@@ -690,7 +690,16 @@ def dashboard_guida(request):
 def pannello_admin(request):
 
     rifugi_in_attesa = Rifugio.objects.filter(stato='in_attesa').select_related('gestore')
+
+    # ─── Ricerca sui rifugi approvati ───────────────────────────
+    cerca_admin = request.GET.get('cerca_admin', '').strip()
     rifugi_tutti = Rifugio.objects.filter(stato='approvato').order_by('-id')
+    if cerca_admin:
+        rifugi_tutti = rifugi_tutti.filter(
+            Q(nome__icontains=cerca_admin) | Q(regione__icontains=cerca_admin)
+        )
+
+    now = timezone.now()
 
     now = timezone.now()
     escursionisti = User.objects.filter(groups__name='Escursionista')
@@ -744,8 +753,9 @@ def pannello_admin(request):
         return redirect('pannello_admin')
 
     return render(request, 'rifugi/pannello_admin.html', {
-        'rifugi_in_attesa': rifugi_in_attesa,
-        'rifugi_tutti': rifugi_tutti,
-        'num_mensili': Rifugio.objects.filter(mensile=True).count(),
-        'classifica': classifica,
-    })
+            'rifugi_in_attesa': rifugi_in_attesa,
+            'rifugi_tutti': rifugi_tutti,
+            'num_mensili': Rifugio.objects.filter(mensile=True).count(),
+            'classifica': classifica,
+            'cerca_admin': cerca_admin,
+        })
