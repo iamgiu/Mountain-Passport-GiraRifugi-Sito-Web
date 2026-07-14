@@ -80,6 +80,11 @@ class EventoForm(forms.ModelForm):
         model = Evento
         fields = ['rifugio', 'titolo', 'descrizione', 'data', 'ora', 'posti_disponibili', 'immagine']
 
+class ItinerarioForm(forms.ModelForm):
+    class Meta:
+        model = Itinerario
+        fields = ['titolo', 'descrizione', 'data', 'ora', 'difficolta', 'posti_disponibili']
+
 # ─── VISTE PUBBLICHE ──────────────────────────────────────────────────────────
 
 def register(request):
@@ -652,28 +657,24 @@ def dashboard_guida(request):
         azione = request.POST.get('azione')
 
         if azione == 'crea_itinerario':
-            Itinerario.objects.create(
-                guida=request.user,
-                titolo=request.POST.get('titolo'),
-                descrizione=request.POST.get('descrizione', ''),
-                data=request.POST.get('data'),
-                ora=request.POST.get('ora') or None,
-                difficolta=request.POST.get('difficolta'),
-                posti_disponibili=int(request.POST.get('posti_disponibili', 10)),
-            )
-            messages.success(request, 'Itinerario creato!')
+            form = ItinerarioForm(request.POST)
+            if form.is_valid():
+                it = form.save(commit=False)
+                it.guida = request.user
+                it.save()
+                messages.success(request, 'Itinerario creato!')
+            else:
+                messages.error(request, 'Dati non validi: controlla i campi inseriti.')
 
         elif azione == 'modifica_itinerario':
             pk = request.POST.get('itinerario_pk')
             it = get_object_or_404(Itinerario, pk=pk, guida=request.user)
-            it.titolo = request.POST.get('titolo')
-            it.descrizione = request.POST.get('descrizione', '')
-            it.data = request.POST.get('data')
-            it.ora = request.POST.get('ora') or None
-            it.difficolta = request.POST.get('difficolta')
-            it.posti_disponibili = int(request.POST.get('posti_disponibili', 0))
-            it.save()
-            messages.success(request, 'Itinerario aggiornato!')
+            form = ItinerarioForm(request.POST, instance=it)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Itinerario aggiornato!')
+            else:
+                messages.error(request, 'Dati non validi: controlla i campi inseriti.')
 
         elif azione == 'elimina_itinerario':
             pk = request.POST.get('itinerario_pk')
