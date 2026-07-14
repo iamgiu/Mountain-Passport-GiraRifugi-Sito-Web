@@ -44,7 +44,7 @@ def aggiorna_posti_disponibili(rifugio):
     prenotazioni_scadute = Prenotazione.objects.filter(
         rifugio=rifugio,
         stato='approvata',
-        data_partenza__lt=date.today(),
+        data_partenza__lte=date.today(),
         posti_restituiti=False
     )
 
@@ -214,7 +214,8 @@ def rifugio(request, pk):
     prenotazione = None
     ha_timbro = False
     recensione_utente = None
-    e_preferito = False 
+    e_preferito = False
+    soggiorno_in_corso = False  # ← nuovo
 
     if request.user.is_authenticated:
         prenotazione = Prenotazione.objects.filter(
@@ -230,6 +231,11 @@ def rifugio(request, pk):
             escursionista=request.user, rifugio=r
         ).exists()
 
+    # Il soggiorno è "in corso" se oggi è tra arrivo e partenza (inclusi)
+    if prenotazione and prenotazione.stato == 'approvata':
+        if prenotazione.data_arrivo < date.today() <= prenotazione.data_partenza:
+            soggiorno_in_corso = True  # ← nuovo
+
     if prenotazione and prenotazione.data_partenza < date.today():
         prenotazione = None
 
@@ -240,6 +246,7 @@ def rifugio(request, pk):
         'ha_timbro': ha_timbro,
         'recensione_utente': recensione_utente,
         'e_preferito': e_preferito,
+        'soggiorno_in_corso': soggiorno_in_corso,  # ← nuovo
     })
 
 def guide(request):
@@ -557,7 +564,7 @@ def dashboard_gestore(request):
         aggiorna_posti_disponibili(r)
     prenotazioni = Prenotazione.objects.filter(
         rifugio__gestore=request.user,
-        data_partenza__gte=date.today()
+        data_partenza__gt=date.today()
     ).select_related('escursionista', 'rifugio').order_by('-id')
     eventi = Evento.objects.filter(rifugio__gestore=request.user, data__gte=date.today()).prefetch_related('iscrizioni__escursionista').order_by('data')
 
