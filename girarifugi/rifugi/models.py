@@ -77,7 +77,10 @@ class Visita(models.Model):
 
     def __str__(self):
         return f"{self.escursionista.username} ({self.rifugio.nome})"
-    
+
+# MODELLO: TIMBRO
+# Rappresenta un timbro digitale che si vedrà nel passaporto del mio escursionista ottenuto in seguito ad un 
+# Può essere ottenuto solo un timbro per ogni rifugio visitato (ma un rifugio lo posso visitare più volte in quel caso se ho già il timbro mi da solo i punti)
 class Timbro(models.Model):
 
     escursionista = models.ForeignKey(
@@ -101,6 +104,8 @@ class Timbro(models.Model):
     def __str__(self):
         return f"Timbro: {self.rifugio.nome} - {self.escursionista.username}"
 
+# MODELLO: PRENOTAZIONE
+# Gestisce la richiesta di pernottamento di un escursionista in un rifugio
 class Prenotazione(models.Model):
 
     escursionista = models.ForeignKey(
@@ -126,7 +131,7 @@ class Prenotazione(models.Model):
     ]
     stato = models.CharField(max_length=20, choices=STATO_CHOICES, default='in_attesa')
 
-    posti_restituiti = models.BooleanField(default=False)
+    posti_restituiti = models.BooleanField(default=False)   # Flag logico utile se la prenotazione viene cancellata per liberare nuovamente i posti letto nel rifugio
 
     def clean(self):
         if self.data_arrivo and self.data_arrivo < date.today():
@@ -140,7 +145,9 @@ class Prenotazione(models.Model):
 
     def __str__(self):
         return f"{self.escursionista.username} - {self.rifugio.nome} ({self.stato}) "
-    
+
+  # MODELLO: ITINERARIO
+  # Rappresenta un'escusionione organizzata da una guida alpina  
 class Itinerario(models.Model):
         
     guida = models.ForeignKey(
@@ -169,6 +176,8 @@ class Itinerario(models.Model):
     def __str__(self):
         return f"{self.titolo} — {self.guida.username} ({self.data})"
 
+# MODELLO: ISCRIZIONE ITINERARIO
+# Tabella per gestire la partecipazione di un escusionista ad un itinerario
 class IscrizioneItinerario(models.Model):
     escursionista = models.ForeignKey(
         User,
@@ -184,11 +193,13 @@ class IscrizioneItinerario(models.Model):
 
     class Meta:
         verbose_name_plural = "Iscrizioni Itinerari"
-        unique_together = ('escursionista', 'itinerario')
+        unique_together = ('escursionista', 'itinerario')   # Evita che un utente si iscriva due volte allo stesso itinerario
 
     def __str__(self):
         return f"{self.escursionista.username} — {self.itinerario.titolo}"
-    
+
+# MODELLO: PROFILO GUIDA
+# Admin può modificare o aggiungere dettagli specifici alle Guide
 class ProfiloGuida(models.Model):
     guida = models.OneToOneField(
         User,
@@ -201,6 +212,8 @@ class ProfiloGuida(models.Model):
     def __str__(self):
         return f"Profilo di {self.guida.username}"
 
+# MODELLO: RECENSIONE
+# Consente agli utenti di lasciare un commento e un voto (1-5) a un rifugio
 class Recensione(models.Model):
 
     escursionista = models.ForeignKey(
@@ -230,6 +243,8 @@ class Recensione(models.Model):
     def __str__(self):
         return f"{self.escursionista.username} - {self.rifugio.nome} ({self.voto}/5)"
 
+# MODELLO: PREFERITO
+# Permette agli escursionisti di salvare i rifugi in una lista di Preferiti
 class Preferito(models.Model):
 
     escursionista = models.ForeignKey(
@@ -246,11 +261,13 @@ class Preferito(models.Model):
 
     class Meta:
         verbose_name_plural = "Preferiti"
-        unique_together = ('escursionista', 'rifugio')
+        unique_together = ('escursionista', 'rifugio')  # Evita i duplicati dello stesso rifugio tra i preferiti dello stesso utente
 
     def __str__(self):
         return f"{self.escursionista.username} — {self.rifugio.nome}"
-    
+
+# MODELLO: EVENTO
+# Rappresenta un evento organizzato all'interno di uno specifico rifugio, evento organzizato dai gestori
 class Evento(models.Model):
     rifugio = models.ForeignKey(
         Rifugio,
@@ -266,11 +283,13 @@ class Evento(models.Model):
 
     class Meta:
         verbose_name_plural = "Eventi"
-        ordering = ['data']
+        ordering = ['data'] # Gli eventi vengono ordinati per data cronologica
 
     def __str__(self):
         return f"{self.titolo} — {self.rifugio.nome} ({self.data})"
-        
+
+# MODELLO: ISCRIZIONE EVENTO
+# Serve per tenere traccia di quali utenti si sono iscritti ad un determinato evento
 class IscrizioneEvento(models.Model):
     escursionista = models.ForeignKey(
         User,
