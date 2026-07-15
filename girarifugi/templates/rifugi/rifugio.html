@@ -1,256 +1,386 @@
 {% extends 'base.html' %}
+
 {% load static %}
 
 {% block title %}{{ rifugio.nome }} — GiraRifugi{% endblock %}
 
 {% block content %}
 
-<!-- HERO FOTO -->
+<!-- Immagine di copertina -->
 <div class="detail-hero">
+
     {% if rifugio.immagine %}
         <img src="{{ rifugio.immagine.url }}" alt="{{ rifugio.nome }}">
     {% else %}
-        <div class="detail-hero-placeholder"></div>
+        <div class="detail-hero-placeholder img-placeholder"></div>
     {% endif %}
+
 </div>
 
 <div class="detail-body">
 
-    <!-- NOME + TASTI -->
+    <!-- Nome del rifugio e tasti del checkin e per i preferiti visibili solo al gruppo Escusionista -->
     <div class="detail-header">
+
         <h1>{{ rifugio.nome }}</h1>
+
         {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
+
         <div style="display:flex; gap:0.5rem;">
-            <a href="{% url 'checkin' %}" class="btn-preferito btn-prenota" title="Check-in">
+
+            <a href="{% url 'checkin' %}" class="btn-preferito btn-prenota" title="Check-in"> <!-- Mi riporta al link della pagina del checkin inoltre mettendo insieme i due stili di bottoni differenti me li unisce -->
                 <span class="material-icons">qr_code_scanner</span>
             </a>
+
             <form method="post" action="{% url 'toggle_preferito' rifugio.pk %}" id="form-preferito">
+
                 {% csrf_token %}
+
                 <button type="submit" class="btn-preferito" title="Salva nei preferiti" id="btn-preferito">
                     <span class="material-icons" id="icona-preferito">
                         {% if e_preferito %}bookmark{% else %}bookmark_border{% endif %}
                     </span>
                 </button>
+
             </form>
+
         </div>
+
         {% endif %}
+
+        <!-- Mostra la porzione del codice QR associato solo al gestore del rifugio -->
         {% if user.is_authenticated and user.groups.all.0.name == 'GestoreRifugio' and rifugio.gestore == user %}
         <div style="background:var(--green-bg); border-radius:var(--radius-sm); padding:0.5rem 1rem; display:flex; align-items:center; gap:0.75rem;">
             <span class="material-icons" style="color:var(--green-dark); font-size:1.2rem;">qr_code</span>
             <span style="font-size:1.1rem; font-weight:700; letter-spacing:3px; color:var(--blue-dark);">{{ rifugio.qr_uuid|stringformat:"s"|slice:":8"|upper }}</span>
         </div>
+
         {% endif %}
+        
     </div>
 
-    <!-- Gestore -->
+    <!-- Mostra chi gestisce il rifugio -->
     {% if rifugio.gestore %}
+
         <p style="font-size:0.85rem; color:var(--gray); margin-top:0.25rem;">
             Gestito da {{ rifugio.gestore.username }}
         </p>
+
     {% endif %}
 
 
-    <!-- PUNTI -->
+    <!-- Mostra quanti punti guadagni se vedi questo rifugio -->
     <p class="detail-punti">+{{ rifugio.altitudine|floatformat:0 }} punti</p>
 
-    <!-- 4 STAT CARDS sulla stessa riga -->
+    <!-- Caratteristiche principali del rifugio -->
     <div class="detail-stats">
-        <div class="detail-stat-card">
+
+        <div class="detail-stat-card stat-card">
             <span class="material-icons detail-stat-icon">terrain</span>
             <span class="detail-stat-value">{{ rifugio.altitudine }}m</span>
             <span class="detail-stat-label">Quota</span>
         </div>
-        <div class="detail-stat-card">
+
+        <div class="detail-stat-card stat-card">
             <span class="material-icons detail-stat-icon">place</span>
             <span class="detail-stat-value">{{ rifugio.regione }}</span>
             <span class="detail-stat-label">Luogo</span>
         </div>
-        <div class="detail-stat-card">
+
+        <div class="detail-stat-card stat-card">
             <span class="material-icons detail-stat-icon">home</span>
             <span class="detail-stat-value">{{ rifugio.tipo }}</span>
             <span class="detail-stat-label">Tipo</span>
         </div>
-        <div class="detail-stat-card">
+
+        <div class="detail-stat-card stat-card">
             <span class="material-icons detail-stat-icon">star</span>
             <span class="detail-stat-value">{{ rifugio.altitudine }}</span>
             <span class="detail-stat-label">Punti</span>
         </div>
+
     </div>
 
+    <!-- Descrizione del rifugio -->
     {% if rifugio.descrizione %}
+
     <p class="detail-descrizione">{{ rifugio.descrizione }}</p>
+
     {% endif %}
 
-    <!-- SERVIZI -->
+    <!-- Servizi principali con la propria icona personalizzata -->
     <div class="detail-section">
+
         <h2>Servizi</h2>
+
         <ul class="detail-list">
+
             <li>
                 <span class="material-icons">bed</span>
                 {{ rifugio.posti_letto }} posti letto
             </li>
+
             <li>
                 <span class="material-icons">check_circle</span>
                 {{ rifugio.posti_disponibili }} posti disponibili
             </li>
+
             <li>
                 <span class="material-icons">location_on</span>
                 {{ rifugio.localita }}
             </li>
+
         </ul>
+
     </div>
 
-    <!-- FORM PRENOTAZIONE -->
+    <!-- Form di prenotazione al rifugio che vedono solo gli Escusionisti con tutta la gestione -->
     {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
+
     <div class="detail-section" id="prenota">
+
         <h2>Prenotazione</h2>
+
         {% if prenotazione %}
+
             {% if prenotazione.stato == 'in_attesa' %}
+
             <div class="prenota-stato attesa">
+
                 <span class="material-icons">hourglass_top</span>
+
                 <div>
                     <p>Il gestore sta verificando la tua richiesta</p>
                     <span>{{ prenotazione.data_arrivo }} → {{ prenotazione.data_partenza }}</span>
                 </div>
+
             </div>
+
             {% elif prenotazione.stato == 'approvata' %}
+
             <div class="prenota-stato approvata">
+
                 <span class="material-icons">check_circle</span>
+
                 <div>
+
                     <p>Prenotazione approvata!</p>
+
                     {% if soggiorno_in_corso %}
                     <p style="color:var(--green-dark); font-weight:600; margin-top:4px; display:flex; align-items:center; gap:0.3rem;">
                         <span class="material-icons" style="font-size:1rem;">hiking</span>
                         Il tuo soggiorno è attualmente in corso!
                     </p>
+
                     {% endif %}
+
                     <span>{{ prenotazione.data_arrivo }} → {{ prenotazione.data_partenza }} · {{ prenotazione.num_ospiti }} ospiti</span>
+
                 </div>
+
             </div>
+
             {% elif prenotazione.stato == 'rifiutata' %}
+
                 <div class="prenota-stato rifiutata">
+
                     <span class="material-icons">cancel</span>
+
                     <div>
                         <p>Prenotazione rifiutata</p>
                         <span>Puoi inviare una nuova richiesta</span>
                     </div>
+
                 </div>
+
                     <form method="post" action="{% url 'prenota' rifugio.pk %}" style="margin-top:1rem;" novalidate>
+
                     {% csrf_token %}
+
                     <div class="prenota-grid">
+
                         <div class="form-group">
                             <label>Data arrivo</label>
-                            <input type="date" name="data_arrivo" min="{% now 'Y-m-d' %}" required>
+                            <input type="date" name="data_arrivo" class="input-base" min="{% now 'Y-m-d' %}" required>
                         </div>
+
                         <div class="form-group">
                             <label>Data partenza</label>
-                            <input type="date" name="data_partenza" required>
+                            <input type="date" name="data_partenza" class="input-base" required>
                         </div>
+
                         <div class="form-group">
                             <label>Numero ospiti</label>
-                            <input type="number" name="num_ospiti" min="1" max="{{ rifugio.posti_disponibili }}" value="1" required>
+                            <input type="number" name="num_ospiti" class="input-base" min="1" max="{{ rifugio.posti_disponibili }}" value="1" required>
                         </div>
+
                     </div>
+
                     <button type="submit" class="btn btn-primary">Invia nuova prenotazione</button>
+
                 </form>
+
             {% endif %}
+
         {% else %}
+
         <form method="post" action="{% url 'prenota' rifugio.pk %}" novalidate>
+
             {% csrf_token %}
+
             <div class="prenota-grid">
+
                 <div class="form-group">
                     <label>Data arrivo</label>
-                    <input type="date" name="data_arrivo" min="{% now 'Y-m-d' %}" required>
+                    <input type="date" name="data_arrivo" class="input-base" min="{% now 'Y-m-d' %}" required>
                 </div>
+
                 <div class="form-group">
                     <label>Data partenza</label>
-                    <input type="date" name="data_partenza" required>
+                    <input type="date" name="data_partenza" class="input-base" required>
                 </div>
+
                 <div class="form-group">
                     <label>Numero ospiti</label>
-                    <input type="number" name="num_ospiti" min="1" max="{{ rifugio.posti_disponibili }}" value="1" required>
+                    <input type="number" name="num_ospiti" class="input-base" min="1" max="{{ rifugio.posti_disponibili }}" value="1" required>
                 </div>
+
             </div>
+
             <button type="submit" class="btn btn-primary">Invia prenotazione</button>
+
         </form>
+
         {% endif %}
+
     </div>
+
     {% endif %}
 
-<!-- RECENSIONI -->
+<!-- Sezione delle recensioni con il form -->
 <div class="detail-section">
+
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.9rem;">
+
         <h2 style="margin-bottom:0;">Recensioni</h2>
+
         {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' and ha_timbro and not recensione_utente %}
+
         <a href="#form-recensione" class="btn btn-outline btn-sm" style="display:inline-flex; align-items:center; gap:0.4rem;">
+
             <span class="material-icons" style="font-size:1rem;">edit</span>
+
             Scrivi Recensione
+
         </a>
+
         {% endif %}
+
     </div>
 
     {% if recensioni %}
+
         {% for r in recensioni %}
+
         <div class="recensione-card">
+            
             <div class="recensione-header">
+
                 <span class="material-icons">account_circle</span>
+
                 <strong>{{ r.escursionista.username }}</strong>
+
                 <span class="recensione-voto">
+
                     <span class="recensione-voto" style="font-weight:600; color: var(--darkblue);">
+
                         {{ r.voto }}/5 stelle
+
                     </span>
+
                 </span>
+
                 <span class="recensione-data">{{ r.data|date:"d/m/Y" }}</span>
+
             </div>
+
             <p>{{ r.testo }}</p>
+
         </div>
+
         {% endfor %}
+
+    <!-- Caso senza recensioni -->
     {% else %}
+
         <div class="recensione-vuota">
             <span class="material-icons">rate_review</span>
             <p>Nessuna recensione ancora. Sii il primo!</p>
         </div>
+
     {% endif %}
 
-    <!-- FORM RECENSIONE -->
+    <!-- Form recensione -->
     {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
+
         {% if ha_timbro and not recensione_utente %}
-        <div id="form-recensione" class="card" style="display:block; margin-top:1rem;">
+
+        <div id="form-recensione" class="card card-base" style="display:block; margin-top:1rem;">
+
             <form method="post" action="{% url 'scrivi_recensione' rifugio.pk %}">
+
                 {% csrf_token %}
+
                 <div class="form-group">
+
                     <label>Voto</label>
-                    <select name="voto">
+
+                    <select name="voto" class="input-base">
                         <option value="1">1 stella</option>
                         <option value="2">2 stelle</option>
                         <option value="3">3 stelle</option>
                         <option value="4">4 stelle</option>
                         <option value="5">5 stelle</option>
                     </select>
+
                 </div>
+
                 <div class="form-group">
+
                     <label>Testo</label>
-                    <textarea name="testo" rows="3" maxlength="500" id="testo-recensione"></textarea>
+
+                    <textarea name="testo" class="input-base" rows="3" maxlength="500" id="testo-recensione"></textarea>
                     <span id="contatore-caratteri" style="font-size:0.8rem; color:var(--gray); display:block; text-align:right; margin-top:2px;">
                         0/500
                     </span>
+
                 </div>
+
                 <button type="submit" class="btn btn-primary btn-sm">Salva recensione</button>
+
             </form>
+
         </div>
+
+        <!-- Per lasciare la recensione bisogna aver visto il rifugio in caso contrario visualizzi questo -->
         {% elif not recensione_utente %}
+
         <p style="font-size:0.82rem; color:var(--gray); margin-top:0.75rem;">
             Visita il rifugio per poter scrivere una recensione.
         </p>
+
         {% endif %}
+
     {% endif %}
+
 </div>
 
 {% block extra_js %}
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ─── VALIDAZIONE DATE PRENOTAZIONE ─────────────────────────────
+    // Validazione lato client delle date di prenotazione
     const inputArrivi = document.querySelectorAll('input[name="data_arrivo"]');
 
     inputArrivi.forEach(function (inputArrivo) {
@@ -260,6 +390,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const inputPartenza = form.querySelector('input[name="data_partenza"]');
         if (!inputPartenza) return;
 
+        // Genera dinamicamente un contenitore per i messaggi di errore 
         let avviso = form.querySelector('.avviso-errore');
         if (!avviso) {
             avviso = document.createElement('div');
@@ -299,6 +430,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return oggi;
         }
 
+        // Gestite la logica delle date inserite
         function validaDate() {
             nascondiErrore();
 
@@ -373,6 +505,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return validaDate();
         }
 
+        // Event list per la validazione esterna dal campo
         inputArrivo.addEventListener('blur', validaDate);
         inputPartenza.addEventListener('blur', validaDate);
 
@@ -383,12 +516,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ─── TOGGLE PREFERITI VIA FETCH API ─────────────────────────────
+    // Salvataggio asincrono nei preferiti
     const formPreferito = document.getElementById('form-preferito');
 
     if (formPreferito) {
         const iconaPreferito = document.getElementById('icona-preferito');
 
+        // Legge in sicurezza il token
         function getCookie(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
@@ -397,7 +531,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         formPreferito.addEventListener('submit', function (event) {
-            event.preventDefault();
+            event.preventDefault(); // Evita il ricaricamento completo della pagina
 
             const url = formPreferito.getAttribute('action');
             const csrftoken = getCookie('csrftoken');
@@ -416,6 +550,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return response.json();
             })
             .then(function (data) {
+                // Aggiorna visivamente l'icona del segnalibro in base alla risposta JSON ricevuta
                 iconaPreferito.textContent = data.aggiunto ? 'bookmark' : 'bookmark_border';
             })
             .catch(function (error) {
@@ -424,7 +559,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ─── CONTATORE CARATTERI RECENSIONE ─────────────────────────────
+    // Contatori caratteri per il testo della recensione
     const testoRecensione = document.getElementById('testo-recensione');
     const contatoreCaratteri = document.getElementById('contatore-caratteri');
 
@@ -435,7 +570,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const lunghezza = testoRecensione.value.length;
             contatoreCaratteri.textContent = lunghezza + '/' + maxCaratteri;
 
-            // Cambia colore quando ci si avvicina al limite
+            // Modifica dinamica del colore del testo in base all'avvicinamento al limite massimo
             if (lunghezza >= maxCaratteri) {
                 contatoreCaratteri.style.color = '#b00020';
             } else if (lunghezza >= maxCaratteri * 0.9) {
@@ -446,11 +581,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         testoRecensione.addEventListener('input', aggiornaContatore);
-        aggiornaContatore(); // inizializza subito, utile se il campo ha già del testo precompilato
+        aggiornaContatore();
     }
 
 });
+
 </script>
+
 {% endblock %}
 
 {% endblock %}

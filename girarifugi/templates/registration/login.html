@@ -1,42 +1,66 @@
 {% extends 'base.html' %}
+
 {% block title %}Accedi — GiraRifugi{% endblock %}
 
 {% block content %}
 <div class="form-container">
+
     <h2>Accedi a GiraRifugi</h2>
+
     <form method="post">
+        
         {% csrf_token %}
+
         {% for field in form %}
+
         <div class="form-group">
+
             {{ field.label_tag }}
+
             {{ field }}
+
             {% if field.errors %}
+            
             <ul class="errorlist">
                 {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
             </ul>
+
             {% endif %}
+
         </div>
+
         {% endfor %}
+
         <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem;">Accedi</button>
+
     </form>
+
     <p style="text-align:center; margin-top:1rem; font-size:0.88rem; color:var(--gray);">
         Non hai un account? <a href="{% url 'register' %}">Registrati gratis</a>
     </p>
+
 </div>
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    // Funzione che mi aggiunge l'icona dell'occhio per vedere cosa ho inserito nell'input della password
     function aggiungiToggle(input) {
+        // Crea un div 
         const wrapper = document.createElement('div');
         wrapper.style.position = 'relative';
+
+        // Lo inserisce dentro all'input applicando un padding interno per metterlo a destra e per evitare che il testo si sovrapponga
         input.parentNode.insertBefore(wrapper, input);
         wrapper.appendChild(input);
         input.style.paddingRight = '40px';
 
+        // Crea l'icona (ovvero il mio occhio)
         const icona = document.createElement('span');
         icona.className = 'material-icons';
-        icona.textContent = 'visibility_off';
+        icona.textContent = 'visibility_off'; // Icona inziale è l'occhio sbarrato
+        // Stili di posizionamento
         icona.style.position = 'absolute';
         icona.style.right = '10px';
         icona.style.top = '50%';
@@ -44,22 +68,28 @@ document.addEventListener('DOMContentLoaded', function () {
         icona.style.cursor = 'pointer';
         icona.style.color = 'var(--gray)';
         icona.style.fontSize = '1.2rem';
+
+        // Aggiunge l'icona 
         wrapper.appendChild(icona);
 
+        // Mi permette di invertire il tipo di input
         icona.addEventListener('click', function () {
             if (input.type === 'password') {
                 input.type = 'text';
-                icona.textContent = 'visibility';
+                icona.textContent = 'visibility'; // Cambia l'icona in occhio aperto
             } else {
                 input.type = 'password';
-                icona.textContent = 'visibility_off';
+                icona.textContent = 'visibility_off'; // Cambia l'icona in occhio chiuso
             }
         });
     }
 
+    // Trova tutti gli input di tipo password nella pagina e applica a ciascuno la funzoone per aggiungere il toggle di visibilità
     document.querySelectorAll('input[type="password"]').forEach(aggiungiToggle);
+
 });
 </script>
+
 {% endblock %}
 
 {% endblock %}

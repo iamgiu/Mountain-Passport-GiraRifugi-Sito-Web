@@ -300,3 +300,12 @@ footer {
 .stat-card .material-icons { 
   color: var(--blue-dark); 
 }
+
+/* Stile per il link presente nel footer */
+footer a {
+  color: var(--green-light);
+  text-decoration: underline;
+}
+footer a:hover {
+  color: var(--white);
+}

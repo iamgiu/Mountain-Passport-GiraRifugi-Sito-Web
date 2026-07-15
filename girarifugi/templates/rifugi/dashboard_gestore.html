@@ -1,23 +1,28 @@
 {% extends 'base.html' %}
+
 {% block title %}Dashboard Gestore — GiraRifugi{% endblock %}
 
 {% block content %}
 
 <div class="page-header">
+
     <h2>Dashboard Gestore</h2>
     <p>Gestisci i tuoi rifugi, le prenotazioni e gli eventi</p>
+
 </div>
 
-<!-- ══ I MIEI RIFUGI ══ -->
 <h2 class="section-title">I miei rifugi</h2>
 
 {% for r in rifugi %}
-<div class="card">
+
+<div class="card card-base">
+
+    <!-- Rifugi che possiede ogni gestore -->
     <div style="display:flex; align-items:center; gap:1rem; flex:1;">
         {% if r.immagine %}
             <img src="{{ r.immagine.url }}" alt="{{ r.nome }}" style="width:72px; height:72px; border-radius:var(--radius-sm); object-fit:cover; flex-shrink:0;">
         {% else %}
-            <div style="width:72px; height:72px; border-radius:var(--radius-sm); background:linear-gradient(135deg, var(--green) 0%, var(--blue-dark) 100%); flex-shrink:0;"></div>
+            <div class="img-placeholder" style="width:72px; height:72px; border-radius:var(--radius-sm); flex-shrink:0;"></div>
         {% endif %}
         <div>
             <h3>{{ r.nome }}</h3>
@@ -26,7 +31,7 @@
         </div>
     </div>
 
-    <!-- FORM MODIFICA -->
+    <!-- Possibilità di poter modificare il rifugio -->
     <details class="modifica-details">
         <summary>Modifica</summary>
         <form method="post" style="margin-top:0.75rem;">
@@ -35,254 +40,351 @@
             <input type="hidden" name="rifugio_pk" value="{{ r.pk }}">
             <div class="form-group">
                 <label>Descrizione</label>
-                <textarea name="descrizione" rows="3">{{ r.descrizione }}</textarea>
+                <textarea name="descrizione" class="input-base" rows="3">{{ r.descrizione }}</textarea>
             </div>
             <div class="form-group">
                 <label>Posti disponibili</label>
-                <input type="number" name="posti_disponibili" value="{{ r.posti_disponibili }}" min="0" max="{{ r.posti_letto }}">
+                <input type="number" name="posti_disponibili" class="input-base" value="{{ r.posti_disponibili }}" min="0" max="{{ r.posti_letto }}">
             </div>
             <button type="submit" class="btn btn-primary btn-sm">Salva modifiche</button>
         </form>
     </details>
+
 </div>
+
+<!-- Caso in cui non abbia rifugi in gestione -->
 {% empty %}
+
 <div class="empty-state">
     <span class="material-icons">home</span>
     <p>Nessun rifugio ancora. Aggiungine uno qui sotto!</p>
 </div>
+
 {% endfor %}
 
-<!-- ══ AGGIUNGI RIFUGIO ══ -->
+<!-- Possibilità di chiedere di aggiugnere nuovi rifugi -->
 <h2 class="section-title">Aggiungi un nuovo rifugio</h2>
-<div class="card" style="display:block;">
+
+<div class="card card-base" style="display:block;">
+
     <form method="post" enctype="multipart/form-data">
+
         {% csrf_token %}
+
         <input type="hidden" name="azione" value="aggiungi_rifugio">
+
         <div class="prenota-grid">
+
             <div class="form-group">
                 <label>Nome</label>
-                <input type="text" name="nome" required>
+                <input type="text" name="nome" class="input-base" required>
             </div>
+
             <div class="form-group">
                 <label>Località</label>
-                <input type="text" name="localita" required>
+                <input type="text" name="localita" class="input-base" required>
             </div>
+
             <div class="form-group">
                 <label>Regione</label>
-                <input type="text" name="regione" required>
+                <input type="text" name="regione" class="input-base" required>
             </div>
+
             <div class="form-group">
                 <label>Altitudine (m)</label>
-                <input type="number" name="altitudine" required>
+                <input type="number" name="altitudine" class="input-base" required>
             </div>
+
             <div class="form-group">
                 <label>Latitudine</label>
-                <input type="number" name="latitudine" step="any" required>
+                <input type="number" name="latitudine" class="input-base" step="any" required>
             </div>
+
             <div class="form-group">
                 <label>Longitudine</label>
-                <input type="number" name="longitudine" step="any" required>
+                <input type="number" name="longitudine" class="input-base" step="any" required>
             </div>
+
             <div class="form-group">
                 <label>Tipo</label>
-                <select name="tipo">
+                <select name="tipo" class="input-base">
                     <option value="RIFUGIO">Rifugio</option>
                     <option value="BIVACCO">Bivacco</option>
                     <option value="CAPANNA">Capanna</option>
                 </select>
             </div>
+
             <div class="form-group">
                 <label>Posti letto</label>
-                <input type="number" name="posti_letto" required>
+                <input type="number" name="posti_letto" class="input-base" required>
             </div>
+
             <div class="form-group">
                 <label>Posti disponibili</label>
-                <input type="number" name="posti_disponibili" required>
+                <input type="number" name="posti_disponibili" class="input-base" required>
             </div>
+
         </div>
+
         <div class="form-group">
             <label>Descrizione</label>
-            <textarea name="descrizione" rows="3"></textarea>
+            <textarea name="descrizione" class="input-base" rows="3"></textarea>
         </div>
+
         <div class="form-group">
             <label>Immagine</label>
-            <input type="file" name="immagine" accept="image/*">
+            <input type="file" name="immagine" class="input-base" accept="image/*">
         </div>
+
         <p style="font-size:0.82rem; color:var(--gray); margin-bottom:0.75rem;">
             Il rifugio sarà visibile dopo l'approvazione dell'amministratore.
         </p>
+
         <button type="submit" class="btn btn-primary">Invia per approvazione</button>
+
     </form>
+
 </div>
 
-<!-- ══ PRENOTAZIONI ══ -->
+<!-- Lista delle prenotazioni dove posso anche accettare o rifiutare una prenotazione -->
 <h2 class="section-title">Prenotazioni</h2>
 
 {% for p in prenotazioni %}
-<div class="card">
+
+<div class="card card-base">
+
     <div>
+
         <h3>{{ p.escursionista.username }}</h3>
+
         <p>{{ p.rifugio.nome }} — {{ p.data_arrivo }} → {{ p.data_partenza }} — {{ p.num_ospiti }} ospiti</p>
+
     </div>
+
     <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+
         <span class="badge {% if p.stato == 'approvata' %}badge-green{% elif p.stato == 'rifiutata' %}badge-red{% else %}badge-gray{% endif %}">
             {{ p.stato }}
         </span>
+
         {% if p.stato == 'in_attesa' %}
         <form method="post" style="display:inline;">
+
             {% csrf_token %}
+
             <input type="hidden" name="azione" value="approva_prenotazione">
             <input type="hidden" name="prenotazione_pk" value="{{ p.pk }}">
             <button type="submit" class="btn btn-primary btn-sm">Approva</button>
+
         </form>
+
         <form method="post" style="display:inline;">
+
             {% csrf_token %}
+
             <input type="hidden" name="azione" value="rifiuta_prenotazione">
             <input type="hidden" name="prenotazione_pk" value="{{ p.pk }}">
             <button type="submit" class="btn btn-danger btn-sm">Rifiuta</button>
+
         </form>
+
         {% endif %}
+
     </div>
+
 </div>
+
+<!-- Caso in cui non ho prenotazioni -->
 {% empty %}
+
 <div class="empty-state">
     <span class="material-icons">calendar_today</span>
     <p>Nessuna prenotazione ancora.</p>
 </div>
+
 {% endfor %}
 
-<!-- ══ ISCRIZIONI EVENTI ══ -->
+<!-- Iscritti agli eventi -->
 <h2 class="section-title">Iscrizioni agli eventi</h2>
+
 {% for e in eventi %}
     {% for iscr in e.iscrizioni.all %}
-    <div class="card">
+
+    <div class="card card-base">
+
         <div>
             <h3>{{ iscr.escursionista.username }}</h3>
             <p>{{ e.titolo }} — {{ e.data }} — {{ iscr.num_persone }} person{% if iscr.num_persone == 1 %}a{% else %}e{% endif %}</p>
         </div>
+
         <span class="badge badge-green">Iscritto</span>
+
     </div>
+
     {% endfor %}
+
+<!-- Caso in cui non si è iscritto nessuno -->
 {% empty %}
+
 <div class="empty-state">
     <span class="material-icons">event</span>
     <p>Nessuna iscrizione ancora.</p>
 </div>
+
 {% endfor %}
 
-<!-- ══ EVENTI ══ -->
+<!-- Lista degli eventi con possibilità di modifica -->
 <h2 class="section-title">I miei eventi</h2>
 
 {% for e in eventi %}
-<div class="card" style="display:block;">
+
+<div class="card card-base" style="display:block;">
+
     <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.75rem;">
+        <!-- Gestione dell'immagine, se il gestore l'ha caricata allora la metto se no mette un placeholder -->
         {% if e.immagine %}
             <img src="{{ e.immagine.url }}" alt="{{ e.titolo }}" style="width:72px; height:72px; border-radius:var(--radius-sm); object-fit:cover; flex-shrink:0;">
         {% else %}
-            <div style="width:72px; height:72px; border-radius:var(--radius-sm); background:linear-gradient(135deg, var(--green) 0%, var(--blue-dark) 100%); flex-shrink:0;"></div>
+            <div class="img-placeholder" style="width:72px; height:72px; border-radius:var(--radius-sm); flex-shrink:0;"></div>
         {% endif %}
+
         <div>
             <h3>{{ e.titolo }}</h3>
             <p>{{ e.rifugio.nome }} — {{ e.data }}{% if e.ora %} alle {{ e.ora }}{% endif %} — {{ e.posti_disponibili }} posti</p>
         </div>
+
     </div>
 
     <details class="modifica-details">
+
         <summary>Modifica</summary>
         <form method="post" enctype="multipart/form-data" style="margin-top:0.75rem;">
+
             {% csrf_token %}
+
             <input type="hidden" name="azione" value="modifica_evento">
             <input type="hidden" name="evento_pk" value="{{ e.pk }}">
+
             <div class="form-group">
                 <label>Titolo</label>
-                <input type="text" name="titolo" value="{{ e.titolo }}" required>
+                <input type="text" name="titolo" class="input-base" value="{{ e.titolo }}" required>
             </div>
+
             <div class="form-group">
                 <label>Descrizione</label>
-                <textarea name="descrizione" rows="2">{{ e.descrizione }}</textarea>
+                <textarea name="descrizione" class="input-base" rows="2">{{ e.descrizione }}</textarea>
             </div>
+
             <div class="form-group">
                 <label>Data</label>
-                <input type="date" name="data" value="{{ e.data|date:'Y-m-d' }}" required>
+                <input type="date" name="data" class="input-base" value="{{ e.data|date:'Y-m-d' }}" required>
             </div>
+
             <div class="form-group">
                 <label>Ora</label>
-                <input type="time" name="ora" value="{{ e.ora }}">
+                <input type="time" name="ora" class="input-base" value="{{ e.ora }}">
             </div>
+
             <div class="form-group">
                 <label>Posti disponibili</label>
-                <input type="number" name="posti_disponibili" value="{{ e.posti_disponibili }}">
+                <input type="number" name="posti_disponibili" class="input-base" value="{{ e.posti_disponibili }}">
             </div>
+
             <div class="form-group">
                 <label>Rifugio</label>
-                <select name="rifugio">
+                <select name="rifugio" class="input-base">
                     {% for r in rifugi %}
                     <option value="{{ r.pk }}" {% if r.pk == e.rifugio.pk %}selected{% endif %}>{{ r.nome }}</option>
                     {% endfor %}
                 </select>
             </div>
+
             <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
                 <button type="submit" class="btn btn-primary btn-sm">Salva</button>
             </div>
+
         </form>
 
         <form method="post" style="margin-top:0.5rem;">
+
             {% csrf_token %}
             <input type="hidden" name="azione" value="elimina_evento">
             <input type="hidden" name="evento_pk" value="{{ e.pk }}">
             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Eliminare questo evento?')">Elimina</button>
+
         </form>
+
     </details>
+
 </div>
+
+<!-- Caso in cui il gestore non ha ancora organizzato un evento -->
 {% empty %}
+
 <div class="empty-state">
     <span class="material-icons">event</span>
     <p>Nessun evento ancora.</p>
 </div>
+
 {% endfor %}
 
-<!-- CREA EVENTO -->
+<!-- Creazione di un evento -->
 <h2 class="section-title">Crea nuovo evento</h2>
-<div class="card" style="display:block;">
+
+<div class="card card-base" style="display:block;">
     <form method="post" enctype="multipart/form-data">
+
         {% csrf_token %}
+
         <input type="hidden" name="azione" value="crea_evento">
+
         <div class="prenota-grid">
+
             <div class="form-group">
                 <label>Titolo</label>
-                <input type="text" name="titolo" required>
+                <input type="text" name="titolo" class="input-base" required>
             </div>
+
             <div class="form-group">
                 <label>Data</label>
-                <input type="date" name="data" required>
+                <input type="date" name="data" class="input-base" required>
             </div>
+
             <div class="form-group">
                 <label>Ora</label>
-                <input type="time" name="ora">
+                <input type="time" name="ora" class="input-base">
             </div>
+
             <div class="form-group">
                 <label>Posti disponibili</label>
-                <input type="number" name="posti_disponibili" value="0">
+                <input type="number" name="posti_disponibili" class="input-base" value="0">
             </div>
+
             <div class="form-group">
                 <label>Rifugio</label>
-                <select name="rifugio">
+                <select name="rifugio" class="input-base">
                     {% for r in rifugi %}
                     <option value="{{ r.pk }}">{{ r.nome }}</option>
                     {% endfor %}
                 </select>
             </div>
+
         </div>
+
         <div class="form-group">
             <label>Descrizione</label>
-            <textarea name="descrizione" rows="3"></textarea>
+            <textarea name="descrizione" class="input-base" rows="3"></textarea>
         </div>
+
         <div class="form-group">
             <label>Immagine</label>
-            <input type="file" name="immagine" accept="image/*">
+            <input type="file" name="immagine" class="input-base" accept="image/*">
         </div>
+
         <button type="submit" class="btn btn-primary">Crea evento</button>
+
     </form>
+    
 </div>
 
 {% endblock %}

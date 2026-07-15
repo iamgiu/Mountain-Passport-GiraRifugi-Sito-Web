@@ -211,7 +211,7 @@
   margin-bottom: 0.4rem; 
 }
 
-/* Contenitore per i tasti a fondo pagina */
+/* Contenitore che mi indica quante pagine ha trovato dalla mia ricerca (visualizzabile solo dall'escusionista) */
 .pagination {
   display: flex;
   align-items: center;

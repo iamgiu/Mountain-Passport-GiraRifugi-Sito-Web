@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+
 {% block title %}Scopri gli eventi — GiraRifugi{% endblock %}
 
 {% block content %}
@@ -8,23 +9,32 @@
     <p>Serate, cene e attività organizzate dai rifugi</p>
 </div>
 
-<!-- FILTRI -->
+<!-- Search bar per cercare un evento -->
 <div class="search-bar" style="margin-bottom:1.5rem;">
+
     <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap; width:100%;">
         <input type="text" name="q" class="input-base" placeholder="Cerca evento..." value="{{ q }}">
         <input type="text" name="regione" class="input-base" placeholder="Regione" value="{{ regione }}">
         <input type="date" name="dal" class="input-base" value="{{ dal }}">
+
         <button type="submit" class="btn btn-primary">Cerca</button>
+
         {% if q or regione or dal %}
         <a href="{% url 'eventi' %}" class="btn btn-outline">Azzera</a>
         {% endif %}
+
     </form>
+
 </div>
 
 {% if eventi %}
+
 <div class="eventi-grid">
+
     {% for evento in eventi %}
+
     <div class="evento-card card-base">
+
         {% if evento.immagine %}
             <img src="{{ evento.immagine.url }}" alt="{{ evento.titolo }}">
         {% elif evento.rifugio.immagine %}
@@ -32,23 +42,32 @@
         {% else %}
             <div class="evento-card-placeholder img-placeholder"></div>
         {% endif %}
+
         <div class="evento-card-body">
+
             <div class="evento-data-badge">
                 <span class="material-icons">event</span>
                 {{ evento.data|date:"d M Y" }}{% if evento.ora %} — {{ evento.ora|time:"H:i" }}{% endif %}
             </div>
+
             <h3>{{ evento.titolo }}</h3>
+
             <p class="evento-rifugio">
                 <span class="material-icons">home</span>
                 {{ evento.rifugio.nome }} — {{ evento.rifugio.regione }}
             </p>
+
+            <!-- La Descrizione dell'evento è data dal tasto Descrizione per nascondere tutti i testi essendo testi magari lunghi -->
             {% if evento.descrizione %}
                 <details class="modifica-details">
                     <summary>Descrizione</summary>
                     <p class="evento-descrizione">{{ evento.descrizione }}</p>
                 </details>
+
             {% endif %}
+
             <div class="evento-footer">
+
                 <span class="badge {% if evento.posti_disponibili > 0 %}badge-green{% else %}badge-red{% endif %}">
                     {% if evento.posti_disponibili > 0 %}
                         {{ evento.posti_disponibili }} posti disponibili
@@ -56,34 +75,60 @@
                         Sold out
                     {% endif %}
                 </span>
+
                 <div style="display:flex; gap:0.5rem; align-items:center;">
+
+                    <!-- Possibilità per un escusionista di iscriversi o verificare che è già iscritto -->
                     {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
+
                         {% if evento.pk in iscrizioni_utente %}
+
                         <span class="badge badge-green">
                             <span class="material-icons" style="font-size:0.85rem; vertical-align:middle;">check</span>
                             Iscritto
                         </span>
+
                         {% elif evento.posti_disponibili > 0 %}
+
                         <form method="post" action="{% url 'iscriviti_evento' evento.pk %}">
+
                             {% csrf_token %}
+
                             <button type="submit" class="btn btn-primary btn-sm">Iscriviti</button>
+
                         </form>
+
                         {% endif %}
+
+                    <!-- Se l'utente non è autenticato allora appare questo bottone -->
                     {% elif not user.is_authenticated %}
+
                     <a href="/accounts/login/" class="btn btn-outline btn-sm">Accedi per iscriverti</a>
+
                     {% endif %}
+
                     <a href="{% url 'rifugio' evento.rifugio.pk %}" class="btn btn-outline btn-sm">Vai al rifugio</a>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
+
     {% endfor %}
+
 </div>
+
+<!-- Se non ci sono eventi -->
 {% else %}
+
 <div class="empty-state">
     <span class="material-icons">event_busy</span>
     <p>Nessun evento trovato.</p>
 </div>
+
 {% endif %}
 
 {% endblock %}

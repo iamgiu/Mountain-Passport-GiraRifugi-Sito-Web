@@ -31,7 +31,29 @@
 .form-group select,
 .form-group textarea {
   width: 100%;
+  border: 1px solid var(--gray-light);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.9rem;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.9rem;
+  color: var(--blue-dark);
+  outline: none;
+  transition: border-color 0.2s;
 }
+
+/* Stato di focus dei campi */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--green);
+}
+
+/* Colore del placeholder */
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--gray);
+}
+
 /* Testo informativo che si trova sotto all'input */
 .form-group .helptext { 
   font-size: 0.78rem; 

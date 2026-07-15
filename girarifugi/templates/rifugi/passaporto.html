@@ -1,120 +1,179 @@
 {% extends 'base.html' %}
+
 {% block title %}Il mio Passaporto — GiraRifugi{% endblock %}
+
 {% load static %}
 
 {% block content %}
 
-<!-- HEADER PROFILO -->
+<!-- Visualizzazione Banner e Avatar -->
 <div class="profilo-hero">
+
     <div class="profilo-copertina"></div>
+
     <div class="profilo-avatar">
         <span class="material-icons">account_circle</span>
     </div>
+
 </div>
+
 <div class="profilo-info">
+
     <h1>{{ user.first_name }} {{ user.last_name }}</h1>
     <p>{{ user.username }}</p>
     <a href="{% url 'modifica_profilo' %}" class="btn btn-outline btn-sm" style="margin-top:0.75rem;">
         <span class="material-icons" style="font-size:1rem; vertical-align:middle;">edit</span>
         Modifica profilo
     </a>
+
 </div>
 
-<!-- STATISTICHE -->
-<h2 class="section-title">Le tue statistiche</h2>
+<!-- Statistiche principale dell'escusionsita -->
+<h2 class="section-title">Le tue statistiche</h2>ù
+
 <div class="profilo-stats">
-    <div class="profilo-stat-card">
+
+    <div class="profilo-stat-card stat-card">
         <span class="material-icons">star</span>
         <span class="profilo-stat-value">{{ punti_totali }}</span>
         <span class="profilo-stat-label">Punti Totali</span>
     </div>
-    <div class="profilo-stat-card">
+
+    <div class="profilo-stat-card stat-card">
         <span class="material-icons">terrain</span>
         <span class="profilo-stat-value">{{ num_visite }}</span>
         <span class="profilo-stat-label">Rifugi Visitati</span>
     </div>
-    <div class="profilo-stat-card">
+
+    <div class="profilo-stat-card stat-card">
         <span class="material-icons">calendar_today</span>
         <span class="profilo-stat-value">{{ num_prenotazioni }}</span>
         <span class="profilo-stat-label">Prenotazioni</span>
     </div>
-    <div class="profilo-stat-card">
+
+    <div class="profilo-stat-card stat-card">
         <span class="material-icons">bookmark</span>
         <span class="profilo-stat-value">{{ num_preferiti }}</span>
         <span class="profilo-stat-label">Preferiti</span>
     </div>
+
 </div>
 
-<!-- TIMBRI -->
+<!-- Sezione Timrbi ottenuti -->
 <h2 class="section-title">I tuoi timbri</h2>
+
 {% if timbri %}
+
 <div class="timbri-grid">
+
     {% for timbro in timbri %}
-    <a href="{% url 'rifugio' timbro.rifugio.pk %}" class="timbro-card">
+
+    <!-- Mi riporta alla pagina del rifugio -->
+    <a href="{% url 'rifugio' timbro.rifugio.pk %}" class="timbro-card card-base">
+
         <div class="timbro-icon">
             <span class="material-icons">landscape</span>
         </div>
+
         <p class="timbro-nome">{{ timbro.rifugio.nome }}</p>
         <p class="timbro-data">{{ timbro.data_assegnazione|date:"d/m/Y" }}</p>
-        <p class="timbro-punti">+{{ timbro.rifugio.altitudine }} pt</p>
     </a>
+
     {% endfor %}
+
 </div>
+
+<!-- Se non ha nessun timbro -->
 {% else %}
+
 <div class="empty-state">
+
     <span class="material-icons">explore</span>
     <p>Non hai ancora visitato nessun rifugio.</p>
     <a href="{% url 'home' %}" class="btn btn-primary">Esplora i rifugi</a>
+
 </div>
+
 {% endif %}
 
-<!-- ATTIVITA RECENTE -->
+<!-- Sezione dell'attività recente -->
 <h2 class="section-title">Attività recente</h2>
+
 {% if attivita %}
+
 <div class="attivita-list">
+
     {% for a in attivita %}
+
     <div class="attivita-item">
         <span class="material-icons attivita-icon">{{ a.icona }}</span>
+
         <div class="attivita-testo">
             <p>{{ a.testo }}</p>
             <span>{{ a.data|date:"d/m/Y" }}</span>
         </div>
+
     </div>
+
     {% endfor %}
+
 </div>
+
+<!-- Se non ha ancora fatto niente -->
 {% else %}
 <div class="empty-state">
+
     <span class="material-icons">history</span>
     <p>Nessuna attività recente.</p>
+
 </div>
+
 {% endif %}
 
-<!-- LE TUE RECENSIONI -->
+<!-- Sezioni delle recensioni lasciate dall'utente nei vari rifugi -->
 <h2 class="section-title">Le tue recensioni</h2>
+
 {% if recensioni %}
+
     {% for r in recensioni %}
+
     <div class="recensione-card">
+
         <div class="recensione-header">
+
             <strong>{{ r.rifugio.nome }}</strong>
             <span class="recensione-voto">
+
                 {% for i in "12345" %}
+
                     {% if forloop.counter <= r.voto %}
                         <span class="material-icons star-on">star</span>
                     {% else %}
                         <span class="material-icons star-off">star</span>
                     {% endif %}
+
                 {% endfor %}
+
             </span>
             <span class="recensione-data">{{ r.data|date:"d/m/Y" }}</span>
+
         </div>
+
         <p>{{ r.testo }}</p>
+
     </div>
+
     {% endfor %}
+
+<!-- Se l'utente non ha scritto nessuna recensione -->
 {% else %}
+
 <div class="empty-state">
     <span class="material-icons">rate_review</span>
     <p>Non hai ancora scritto nessuna recensione.</p>
+
 </div>
+
 {% endif %}
 
 {% endblock %}

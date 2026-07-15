@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+
 {% block title %}Trova la tua Guida — GiraRifugi{% endblock %}
 
 {% block content %}
@@ -8,114 +9,163 @@
     <p>Esplora gli itinerari organizzati dalle nostre guide alpine</p>
 </div>
 
-<!-- SEZIONE GUIDE -->
+<!-- SSezione in cui posso vedere tutte le guide -->
 <div class="page-header" style="margin-top:0;">
     <h3>Le nostre Guide</h3>
 </div>
 
-<!-- FILTRO GUIDE -->
+<!-- Search bar per cercare una guida che mi interessa -->
 <div class="search-bar" style="margin-bottom:1.5rem;">
+    
     <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap; width:100%;">
-        <input type="text" name="guida_q" placeholder="Cerca guida per nome..." value="{{ guida_q }}">
+
+        <input type="text" name="guida_q" class="input-base" placeholder="Cerca guida per nome..." value="{{ guida_q }}">
+
         <button type="submit" class="btn btn-primary">Cerca</button>
+
         {% if guida_q %}
         <a href="{% url 'guide' %}" class="btn btn-outline">Azzera</a>
         {% endif %}
+
     </form>
+
 </div>
 
 {% if guide_lista %}
+
 <div class="eventi-grid" style="margin-bottom:2.5rem;">
+
     {% for guida in guide_lista %}
-    <div class="evento-card">
-        <div class="evento-card-placeholder" style="background: linear-gradient(135deg, var(--green) 0%, var(--blue-dark) 100%); display:flex; align-items:center; justify-content:center;">
+    <div class="evento-card card-base">
+
+        <div class="evento-card-placeholder img-placeholder" style="display:flex; align-items:center; justify-content:center;">
+
             {% if guida.profilo_guida.foto %}
             <img src="{{ guida.profilo_guida.foto.url }}" alt="{{ guida.username }}" style="width:100%; height:100%; object-fit:cover;">
             {% else %}
             <span class="material-icons" style="font-size:3rem; color:rgba(255,255,255,0.4);">person</span>
             {% endif %}
+
         </div>
+
         <div class="evento-card-body">
+
             <h3>{{ guida.first_name|default:guida.username }}</h3>
+
             {% if guida.profilo_guida.bio %}
             <details class="modifica-details">
                 <summary>Descrizione</summary>
                 <p class="evento-descrizione">{{ guida.profilo_guida.bio|linebreaksbr }}</p>
             </details>
+
             {% else %}
             <p class="evento-descrizione" style="color:var(--gray);">Nessuna descrizione disponibile.</p>
             {% endif %}
 
             {% if is_admin %}
             <details class="modifica-details">
+
+                <!-- Permette all'admin di aggiungere informazioni alla mia guida -->
                 <summary>Modifica</summary>
+
                 <form method="post" enctype="multipart/form-data" style="margin-top:0.5rem;">
+
                     {% csrf_token %}
+
                     <input type="hidden" name="azione" value="modifica_profilo_guida_admin">
                     <input type="hidden" name="guida_pk" value="{{ guida.pk }}">
+
                     <div class="form-group">
                         <label>Nome visualizzato</label>
-                        <input type="text" name="first_name" value="{{ guida.first_name }}">
+                        <input type="text" name="first_name" class="input-base" value="{{ guida.first_name }}">
                     </div>
+
                     <div class="form-group">
                         <label>Bio</label>
-                        <textarea name="bio" rows="3">{{ guida.profilo_guida.bio }}</textarea>
+                        <textarea name="bio" class="input-base" rows="3">{{ guida.profilo_guida.bio }}</textarea>
                     </div>
+
                     <div class="form-group">
                         <label>Foto</label>
-                        <input type="file" name="foto" accept="image/*">
+                        <input type="file" name="foto" class="input-base" accept="image/*">
                     </div>
+
                     <button type="submit" class="btn btn-primary btn-sm">Salva</button>
+
                 </form>
+
             </details>
+
             {% endif %}
+
         </div>
+
     </div>
+
     {% endfor %}
+
 </div>
+
+<!-- Se non ci sono guide  -->
 {% else %}
+
 <div class="empty-state" style="margin-bottom:2.5rem;">
     <span class="material-icons">person</span>
     <p>Nessuna guida trovata.</p>
 </div>
+
 {% endif %}
 
-<!-- FILTRI -->
+<!-- Seatch bar per ricercare un itinerario particolare  -->
 <div class="search-bar" style="margin-bottom:1.5rem;">
+
     <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap; width:100%;">
-        <input type="text" name="q" placeholder="Cerca itinerario..." value="{{ q }}">
-        <select name="difficolta">
+
+        <input type="text" name="q" class="input-base" placeholder="Cerca itinerario..." value="{{ q }}">
+
+        <select name="difficolta" class="input-base">
             <option value="">Tutte le difficoltà</option>
             <option value="facile" {% if difficolta == 'facile' %}selected{% endif %}>Facile</option>
             <option value="medio" {% if difficolta == 'medio' %}selected{% endif %}>Medio</option>
             <option value="difficile" {% if difficolta == 'difficile' %}selected{% endif %}>Difficile</option>
             <option value="esperto" {% if difficolta == 'esperto' %}selected{% endif %}>Esperto</option>
         </select>
+
         <button type="submit" class="btn btn-primary">Cerca</button>
+
         {% if q or difficolta %}
         <a href="{% url 'guide' %}" class="btn btn-outline">Azzera</a>
         {% endif %}
+
     </form>
+
 </div>
 
-<!-- SEZIONE ITINERARI -->
+<!-- Tutti gli itinerari programmati -->
 <div class="page-header">
     <h3>Itinerari disponibili</h3>
 </div>
 
 {% if itinerari %}
+
 <div class="eventi-grid">
+
     {% for it in itinerari %}
-    <div class="evento-card">
-        <div class="evento-card-placeholder" style="background: linear-gradient(135deg, var(--green) 0%, var(--blue-dark) 100%); display:flex; align-items:center; justify-content:center;">
+    <div class="evento-card card-base">
+
+        <div class="evento-card-placeholder img-placeholder" style="display:flex; align-items:center; justify-content:center;">
             <span class="material-icons" style="font-size:3rem; color:rgba(255,255,255,0.4);">hiking</span>
         </div>
+
         <div class="evento-card-body">
+
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.6rem;">
+
                 <span class="evento-data-badge">
                     <span class="material-icons">event</span>
                     {{ it.data|date:"d M Y" }}{% if it.ora %} — {{ it.ora|time:"H:i" }}{% endif %}
                 </span>
+
                 <span class="badge 
                     {% if it.difficolta == 'facile' %}badge-green
                     {% elif it.difficolta == 'medio' %}badge-blue
@@ -123,19 +173,26 @@
                     {% else %}badge-red{% endif %}">
                     {{ it.get_difficolta_display }}
                 </span>
+
             </div>
+
             <h3>{{ it.titolo }}</h3>
+
             <p class="evento-rifugio">
                 <span class="material-icons">person</span>
                 Guida: {{ it.guida.username }}
             </p>
+
             {% if it.descrizione %}
             <details class="modifica-details">
+                <!-- Descrizione a tendina cosi se c'è troppo testo non disturba troppo -->
                 <summary>Descrizione</summary>
                 <p class="evento-descrizione">{{ it.descrizione|linebreaksbr }}</p>
             </details>
+
             {% endif %}
             <div class="evento-footer">
+
                 <span class="badge {% if it.posti_disponibili > 0 %}badge-green{% else %}badge-red{% endif %}">
                     {% if it.posti_disponibili > 0 %}
                         {{ it.posti_disponibili }} posti
@@ -143,31 +200,49 @@
                         Sold out
                     {% endif %}
                 </span>
+
+                <!-- Escusionista si può iscrivere o verificare di essere iscritto -->
                 {% if user.is_authenticated and user.groups.all.0.name == 'Escursionista' %}
                     {% if it.pk in iscrizioni_utente %}
                     <span class="badge badge-green">
                         <span class="material-icons" style="font-size:0.85rem; vertical-align:middle;">check</span>
                         Iscritto
                     </span>
+
                     {% elif it.posti_disponibili > 0 %}
                     <form method="post" action="{% url 'iscriviti_itinerario' it.pk %}">
+
                         {% csrf_token %}
+
                         <button type="submit" class="btn btn-primary btn-sm">Iscriviti</button>
+
                     </form>
+
                     {% endif %}
+
+                <!-- Se l'utente non è loggato allora appare questo -->
                 {% elif not user.is_authenticated %}
                 <a href="/accounts/login/" class="btn btn-outline btn-sm">Accedi per iscriverti</a>
                 {% endif %}
+
             </div>
+
         </div>
+
     </div>
+
     {% endfor %}
+    
 </div>
+
+<!-- Se non ci sono itinerari programmati  -->
 {% else %}
+
 <div class="empty-state">
     <span class="material-icons">hiking</span>
     <p>Nessun itinerario disponibile al momento.</p>
 </div>
+
 {% endif %}
 
 {% endblock %}

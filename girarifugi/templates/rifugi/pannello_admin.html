@@ -1,53 +1,71 @@
 {% extends 'base.html' %}
+
 {% block title %}Pannello Admin — GiraRifugi{% endblock %}
 
 {% block content %}
 
 <div class="page-header">
+
     <h2>Pannello Admin</h2>
-    <p>Gestisci rifugi e monitora gli utenti</p>
+    <p>Gestisci rifugi</p>
+
 </div>
 
-<!-- ALERT RIFUGI IN ATTESA -->
+<!-- Alert per i rifugi in attesa -->
 {% if rifugi_in_attesa %}
+
 <div class="alert-card">
     <span class="material-icons">notifications_active</span>
     <p>Hai <strong>{{ rifugi_in_attesa|length }}</strong> rifugi in attesa di approvazione.</p>
 </div>
+
 {% endif %}
 
-<!-- ══ RIFUGI IN ATTESA ══ -->
 <h2 class="section-title">Rifugi in attesa di approvazione</h2>
 
 {% for r in rifugi_in_attesa %}
-<div class="card">
+
+<div class="card card-base">
+
     <div style="display:flex; align-items:center; gap:1rem; flex:1;">
+
+        <!-- Verifica se ha un immagine altirmenti mette un placeholder -->
         {% if r.immagine %}
             <img src="{{ r.immagine.url }}" alt="{{ r.nome }}" style="width:72px; height:72px; border-radius:var(--radius-sm); object-fit:cover; flex-shrink:0;">
         {% else %}
-            <div style="width:72px; height:72px; border-radius:var(--radius-sm); background:linear-gradient(135deg, var(--green) 0%, var(--blue-dark) 100%); flex-shrink:0;"></div>
+            <div class="img-placeholder" style="width:72px; height:72px; border-radius:var(--radius-sm); flex-shrink:0;"></div>
         {% endif %}
+
         <div>
             <h3>{{ r.nome }}</h3>
             <p>{{ r.regione }} — {{ r.altitudine }}m — {{ r.tipo }}</p>
             {% if r.gestore %}<p>Gestore: {{ r.gestore.username }}</p>{% endif %}
         </div>
+
     </div>
+
+    <!-- Tasti Approva o Rifiuta -->
     <div style="display:flex; gap:0.5rem;">
+
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="azione" value="approva">
             <input type="hidden" name="rifugio_pk" value="{{ r.pk }}">
             <button type="submit" class="btn btn-primary btn-sm">Approva</button>
         </form>
+
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="azione" value="rifiuta">
             <input type="hidden" name="rifugio_pk" value="{{ r.pk }}">
             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Eliminare questo rifugio?')">Rifiuta</button>
         </form>
+
     </div>
+
 </div>
+
+<!-- Se non ci sono rifugi da approvare -->
 {% empty %}
 <div class="empty-state">
     <span class="material-icons">check_circle</span>
@@ -55,26 +73,37 @@
 </div>
 {% endfor %}
 
+<!-- Lista di tutti i rifugi con search bar e possibilità di aggiungerli o toglierli dai rifugi mensili -->
 <h2 class="home-section-title">Rifugi approvati</h2>
 
-<div class="card" style="display:block; margin-bottom:1.5rem;">
+<div class="card card-base" style="display:block; margin-bottom:1.5rem;">
+
     <form method="get" action="{% url 'pannello_admin' %}">
+
         <div class="prenota-grid">
+
             <div class="form-group">
                 <label>Cerca per nome o regione</label>
-                <input type="text" name="cerca_admin" value="{{ cerca_admin }}" placeholder="Es. Locatelli, Piemonte...">
+                <input type="text" name="cerca_admin" class="input-base" value="{{ cerca_admin }}" placeholder="Es. Locatelli, Piemonte...">
             </div>
+
         </div>
+
         <button type="submit" class="btn btn-primary">Cerca</button>
+
         {% if cerca_admin %}
         <a href="{% url 'pannello_admin' %}" class="btn btn-reset">Reimposta filtri</a>
         {% endif %}
+
     </form>
+
 </div>
 
 {% for r in rifugi_tutti %}
-<div class="card">
+<div class="card card-base">
+
     <div style="flex:1;">
+
         <h3>{{ r.nome }}</h3>
         <p>{{ r.regione }} — {{ r.tipo }}</p>
         <p style="font-size:0.85rem; color:var(--gray);">
@@ -84,29 +113,45 @@
                 Punti: <strong>{{ r.altitudine }}</strong>
             {% endif %}
         </p>
+
     </div>
+
     <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+
         <form method="post" style="display:flex; align-items:center; gap:0.5rem;">
             {% csrf_token %}
             <input type="hidden" name="azione" value="modifica_altitudine">
             <input type="hidden" name="rifugio_pk" value="{{ r.pk }}">
+
             <div class="form-group" style="margin:0;">
-                <input type="number" name="altitudine" value="{{ r.altitudine }}" style="width:100px;">
+                <input type="number" name="altitudine" class="input-base" value="{{ r.altitudine }}" style="width:100px;">
             </div>
+
             <button type="submit" class="btn btn-outline btn-sm">Salva</button>
+
         </form>
+
         <form method="post" style="display:inline;">
+
             {% csrf_token %}
+
             <input type="hidden" name="azione" value="toggle_mensile">
             <input type="hidden" name="rifugio_pk" value="{{ r.pk }}">
+
             {% if r.mensile %}
                 <button type="submit" class="btn btn-danger btn-sm">Togli da mensile</button>
             {% else %}
                 <button type="submit" class="btn btn-primary btn-sm">Rendi mensile</button>
             {% endif %}
+
         </form>
+
     </div>
+
 </div>
+
+<!-- Se non ce ne sono -->ù
+
 {% empty %}
 <div class="empty-state">
     <span class="material-icons">home</span>

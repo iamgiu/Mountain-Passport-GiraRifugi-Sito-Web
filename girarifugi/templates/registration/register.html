@@ -1,45 +1,68 @@
 {% extends 'base.html' %}
+
 {% block title %}Registrati — GiraRifugi{% endblock %}
 
 {% block content %}
 <div class="form-container">
+
     <h2>Crea il tuo account</h2>
+
+    <p class="helptext" style="margin-bottom:1.2rem;">
+    La registrazione è riservata agli <strong>escursionisti</strong>. 
+    Se sei un gestore di rifugio o una guida alpina, contattaci via email: <strong>girarifugi@example.com</strong>
+
     <form method="post">
+
         {% csrf_token %}
+
         {% for field in form %}
+
         <div class="form-group">
+
             {{ field.label_tag }}
+
             {{ field }}
+
             {% if field.help_text %}
             <p class="helptext">{{ field.help_text }}</p>
             {% endif %}
+
             {% if field.errors %}
             <ul class="errorlist">
                 {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
             </ul>
+
             {% endif %}
+
         </div>
+        
         {% endfor %}
+
         <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem;">Registrati</button>
+
     </form>
+
     <p style="text-align:center; margin-top:1rem; font-size:0.88rem; color:var(--gray);">
         Hai già un account? <a href="/accounts/login/">Accedi</a>
     </p>
+
 </div>
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ─── MOSTRA/NASCONDI PASSWORD ─────────────────────────────
+    // Funzione che mi permette di vedere o no la password come nel login 
     function aggiungiToggle(input) {
         const wrapper = document.createElement('div');
         wrapper.style.position = 'relative';
+
         input.parentNode.insertBefore(wrapper, input);
         wrapper.appendChild(input);
         input.style.paddingRight = '40px';
 
         const icona = document.createElement('span');
+
         icona.className = 'material-icons';
         icona.textContent = 'visibility_off';
         icona.style.position = 'absolute';
@@ -49,6 +72,7 @@ document.addEventListener('DOMContentLoaded', function () {
         icona.style.cursor = 'pointer';
         icona.style.color = 'var(--gray)';
         icona.style.fontSize = '1.2rem';
+
         wrapper.appendChild(icona);
 
         icona.addEventListener('click', function () {
@@ -69,9 +93,10 @@ document.addEventListener('DOMContentLoaded', function () {
         wrapperDiPassword[input.id] = aggiungiToggle(input);
     });
 
-    // ─── INDICATORE FORZA PASSWORD ─────────────────────────────
+    // Calcolo e visualizzazione della forza della password inserita
     const inputPassword1 = document.getElementById('id_password1');
     if (inputPassword1) {
+        // Crea l'etichetta di feedback sotto l'input e i suoi stili inserendolo sotto alla casella della prima pasword inserita
         const barraForza = document.createElement('div');
         barraForza.id = 'barra-forza-password';
         barraForza.style.marginTop = '6px';
@@ -79,24 +104,29 @@ document.addEventListener('DOMContentLoaded', function () {
         barraForza.style.fontFamily = "'Montserrat', sans-serif";
         wrapperDiPassword['id_password1'].insertAdjacentElement('afterend', barraForza);
 
+        // Calcola un punteggio numerico sui requistiti di complessità della password
         function calcolaForza(valore) {
             let punteggio = 0;
-            if (valore.length >= 8) punteggio++;
-            if (valore.length >= 12) punteggio++;
-            if (/[A-Z]/.test(valore)) punteggio++;
-            if (/[0-9]/.test(valore)) punteggio++;
-            if (/[^A-Za-z0-9]/.test(valore)) punteggio++;
+            if (valore.length >= 8) punteggio++;    // Lunghezza minima
+            if (valore.length >= 12) punteggio++;   // Sirecurezza aggiuntiva se è tanto lunga
+            if (/[A-Z]/.test(valore)) punteggio++;  // Contiene almeno una lettera maiuscola
+            if (/[0-9]/.test(valore)) punteggio++;  // Contiene almeno un numero
+            if (/[^A-Za-z0-9]/.test(valore)) punteggio++;   // Contiene almeno un carattere speciale
             return punteggio;
         }
 
+        // Calcola in tempo reale la fornza della passwortd ad ogni carattere digitato
         inputPassword1.addEventListener('input', function () {
             const valore = inputPassword1.value;
             if (!valore) {
-                barraForza.textContent = '';
+                barraForza.textContent = ''; // Pulisce il testo se l'input è vuoto
                 return;
             }
+
             const punteggio = calcolaForza(valore);
             let testo, colore;
+
+            // Definisce la fascia di forza e il rispettivo colore in base al punteggio
             if (punteggio <= 2) {
                 testo = 'Debole';
                 colore = '#b00020';
@@ -112,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ─── VERIFICA CORRISPONDENZA PASSWORD ─────────────────────────
+    // Verifica la corrispondenza tra le due password inserite
     const inputPassword2 = document.getElementById('id_password2');
     if (inputPassword1 && inputPassword2) {
         const avvisoMatch = document.createElement('div');
@@ -120,18 +150,20 @@ document.addEventListener('DOMContentLoaded', function () {
         avvisoMatch.style.fontSize = '0.8rem';
         avvisoMatch.style.marginTop = '4px';
         avvisoMatch.style.fontFamily = "'Montserrat', sans-serif";
+
         wrapperDiPassword['id_password2'].insertAdjacentElement('afterend', avvisoMatch);
 
+        // Verifica se il contenuto dei due input coincide e genera un feedback visivo
         function verificaMatch() {
             if (!inputPassword2.value) {
-                avvisoMatch.textContent = '';
+                avvisoMatch.textContent = ''; // Nessun avviso se non è stata inserita la conferma
                 return;
             }
             if (inputPassword1.value === inputPassword2.value) {
-                avvisoMatch.textContent = '✓ Le password coincidono';
+                avvisoMatch.textContent = 'Le password coincidono';
                 avvisoMatch.style.color = 'var(--green-dark)';
             } else {
-                avvisoMatch.textContent = '✗ Le password non coincidono';
+                avvisoMatch.textContent = 'Le password non coincidono';
                 avvisoMatch.style.color = '#b00020';
             }
         }
@@ -140,30 +172,35 @@ document.addEventListener('DOMContentLoaded', function () {
         inputPassword2.addEventListener('input', verificaMatch);
     }
 
-    // ─── CONTROLLO USERNAME GIÀ ESISTENTE (Fetch API) ─────────────
+    // Controllo asincrono username disponibile
     const inputUsername = document.getElementById('id_username');
+
     if (inputUsername) {
         const avvisoUsername = document.createElement('div');
         avvisoUsername.id = 'avviso-username';
         avvisoUsername.style.fontSize = '0.8rem';
         avvisoUsername.style.marginTop = '4px';
         avvisoUsername.style.fontFamily = "'Montserrat', sans-serif";
+
         inputUsername.closest('.form-group').appendChild(avvisoUsername);
 
+        // Chiamata AJAX per verificare l'esistenza dell'username quando sono fuori dall'input
         inputUsername.addEventListener('blur', function () {
             const valore = inputUsername.value.trim();
             if (!valore) {
-                avvisoUsername.textContent = '';
+                avvisoUsername.textContent = ''; // Rimuove messaggi se il campo è vuoto
                 return;
             }
+            // Chiama la view di Django e gli passa l'username codificato
             fetch('{% url "check_username" %}?username=' + encodeURIComponent(valore))
                 .then(function (response) { return response.json(); })
                 .then(function (data) {
+                    // Aggiorna l'avviso in base alla flag
                     if (data.esiste) {
-                        avvisoUsername.textContent = '✗ Username già in uso';
+                        avvisoUsername.textContent = 'Username già in uso';
                         avvisoUsername.style.color = '#b00020';
                     } else {
-                        avvisoUsername.textContent = '✓ Username disponibile';
+                        avvisoUsername.textContent = 'Username disponibile';
                         avvisoUsername.style.color = 'var(--green-dark)';
                     }
                 })
@@ -174,7 +211,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 });
+
 </script>
+
 {% endblock %}
 
 {% endblock %}
