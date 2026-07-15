@@ -10,37 +10,31 @@ from django.contrib import messages
 from datetime import date, timedelta
 from django.utils import timezone
 from django.http import JsonResponse
+from django.db.models import Sum
 from django import forms
 from django.contrib.auth import update_session_auth_hash
 from .models import Rifugio, Visita, Timbro, Prenotazione, Recensione, Preferito, Evento, Itinerario, IscrizioneItinerario, IscrizioneEvento, ProfiloGuida
 
-# ─── MIXIN PERMESSI ───────────────────────────────────────────────────────────
-
+# Limita l'accesso alla vista agli utenti di un certo gruppo
 def gruppo_richiesto(nome_gruppo):
     def decorator(view_func):
         def wrapper(request, *args, **kwargs):
             if not request.user.is_authenticated:
-                return redirect_to_login(request.get_full_path())
+                return redirect_to_login(request.get_full_path())   # Se non è loggato lo porta la login
             if not request.user.groups.filter(name=nome_gruppo).exists() and not request.user.is_superuser:
-                return render(request, '403.html', status=403)
-            return view_func(request, *args, **kwargs)
+                return render(request, '403.html', status=403)  # Nessun permesso allora lo reindirizza allora pagina 403
+            return view_func(request, *args, **kwargs)  # altrimenti se è loggato con l'utente corretto allora mi fa vedere la pagina normale
         return wrapper
     return decorator
 
-# ─── UTILITY PRENOTAZIONI ─────────────────────────────────────────────────────
-
+# Calcola i punti assegnati per la vista di un rifugio
+# Se un rifugio fa parte dei "rifugi mensili" i punti vengono raddoppiati
 def punti_rifugio(rifugio):
-    """I rifugi mensili valgono doppi punti."""
     return rifugio.altitudine * 2 if rifugio.mensile else rifugio.altitudine
 
+# Aggiorna i posti letti disponibili, se un escusionista ha finito di soggiornare allora mi rilibera lo slot di posti che aveva occupato
 def aggiorna_posti_disponibili(rifugio):
-    """
-    Restituisce al rifugio i posti occupati dalle prenotazioni approvate
-    il cui soggiorno è ormai passato, una sola volta per prenotazione
-    (grazie al flag posti_restituiti).
-    """
-    from django.db.models import Sum
-
+    # Cerca tutte le prenotazioni del rifugio scadute
     prenotazioni_scadute = Prenotazione.objects.filter(
         rifugio=rifugio,
         stato='approvata',
@@ -48,45 +42,50 @@ def aggiorna_posti_disponibili(rifugio):
         posti_restituiti=False
     )
 
-    totale = prenotazioni_scadute.aggregate(tot=Sum('num_ospiti'))['tot'] or 0
+    totale = prenotazioni_scadute.aggregate(tot=Sum('num_ospiti'))['tot'] or 0  # Calcola la somma dei posti letto occupati da una prenotazione scaduta
 
     if totale:
         rifugio.posti_disponibili = min(rifugio.posti_letto, rifugio.posti_disponibili + totale)
         rifugio.save()
         prenotazioni_scadute.update(posti_restituiti=True)
 
-# ─── FORM REGISTRAZIONE ───────────────────────────────────────────────────────
+# Query che mi filtra le visite al solo mese corrente
+def visite_mese_corrente(queryset_visite):
+    now = timezone.now()
+    return queryset_visite.filter(data_visita__year=now.year, data_visita__month=now.month)
 
+# Form per la registrazione dei nuovi utenti
 class RegisterForm(UserCreationForm):
-    email = forms.EmailField(required=True)
+    email = forms.EmailField(required=True) # Campo obbligatorio
 
     class Meta(UserCreationForm.Meta):
         fields = ['username', 'email', 'password1', 'password2']
 
-# ─── FORM GESTORE ───────────────────────────────────────────────────────
-
+# Form che consente ai gestori di modificare la descrizione e i posti disponibili del proprio rifugio
 class ModificaRifugioForm(forms.ModelForm):
     class Meta:
         model = Rifugio
         fields = ['descrizione', 'posti_disponibili']
 
+# Form usato per la proposta di inserimento di un nuovo rifugio
 class NuovoRifugioForm(forms.ModelForm):
     class Meta:
         model = Rifugio
         fields = ['nome', 'localita', 'altitudine', 'latitudine', 'longitudine', 'regione', 'tipo', 'descrizione', 'posti_letto', 'posti_disponibili', 'immagine']
 
+# Form per la creazione e la modifica degli eventi organizzati dai rifugi
 class EventoForm(forms.ModelForm):
     class Meta:
         model = Evento
         fields = ['rifugio', 'titolo', 'descrizione', 'data', 'ora', 'posti_disponibili', 'immagine']
 
+# Form usato dalle guide per la creazione o la modifica dei proprio itinerari
 class ItinerarioForm(forms.ModelForm):
     class Meta:
         model = Itinerario
         fields = ['titolo', 'descrizione', 'data', 'ora', 'difficolta', 'posti_disponibili']
 
-# ─── VISTE PUBBLICHE ──────────────────────────────────────────────────────────
-
+# Gestisce l'iscrizione di un nuovo utente e lo associa automaticamente al gruppo "Escusionista"
 def register(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
@@ -99,14 +98,15 @@ def register(request):
         form = RegisterForm()
     return render(request, 'registration/register.html', {'form': form})
 
+# Vista dinamica per la Home
+# Mostra ingormazioni generiche se l'utente è anonimo, altirmenti adatta l'interfaccia in base al ruolo dell'utente
 def home(request):
-
     # Variabili comuni sempre calcolate
     rifugi_mensili = Rifugio.objects.filter(stato='approvato', mensile=True)
     rifugi_casuali = Rifugio.objects.filter(stato='approvato').order_by('?')[:10]
     rifugi_in_attesa_count = Rifugio.objects.filter(stato='in_attesa').count()
 
-    # Variabili per ruolo
+    # Inizilizzazioni delle variabili
     rifugi_preferiti = []
     rifugi_paginati = None
     rifugi_gestore = []
@@ -117,7 +117,7 @@ def home(request):
     gestori = []
     nome = regione = quota_min = quota_max = ''
 
-    # Reset esplicito dei filtri (dal bottone "Reimposta filtri")
+    # Gestione del pulsante reset dei parametri di ricerca salvati in sessione
     if request.GET.get('reset') == '1':
         request.session.pop('filtri', None)
         return redirect('home')
@@ -126,13 +126,12 @@ def home(request):
         gruppo = request.user.groups.first()
         nome_gruppo = gruppo.name if gruppo else ''
 
+        # HOME ESCURSIONISTA
         if nome_gruppo == 'Escursionista':
             preferiti = Preferito.objects.filter(escursionista=request.user).select_related('rifugio')
             rifugi_preferiti = [p.rifugio for p in preferiti]
             rifugi = Rifugio.objects.filter(stato='approvato')
 
-            # Se non sono stati passati parametri di ricerca in GET, ripristina
-            # gli ultimi filtri usati salvati in sessione.
             filtri_sessione = request.session.get('filtri', {})
             has_query_params = any(k in request.GET for k in ('nome', 'regione', 'quota_min', 'quota_max'))
             if has_query_params:
@@ -147,31 +146,38 @@ def home(request):
                 quota_max = filtri_sessione.get('quota_max', '')
 
             visite = Visita.objects.filter(escursionista=request.user).select_related('rifugio')
+
             if nome: rifugi = rifugi.filter(nome__icontains=nome)
             if regione: rifugi = rifugi.filter(regione__icontains=regione)
             if quota_min: rifugi = rifugi.filter(altitudine__gte=quota_min)
             if quota_max: rifugi = rifugi.filter(altitudine__lte=quota_max)
+
             request.session['filtri'] = {
                 'nome': nome, 'regione': regione,
                 'quota_min': quota_min, 'quota_max': quota_max
             }
+
             paginator = Paginator(rifugi, 10)
             rifugi_paginati = paginator.get_page(request.GET.get('page'))
 
+        # HOME GESTORE
         elif nome_gruppo == 'GestoreRifugio':
             rifugi_gestore = Rifugio.objects.filter(gestore=request.user)
             prenotazioni_in_attesa = Prenotazione.objects.filter(
                 rifugio__gestore=request.user, stato='in_attesa'
             ).count()
 
+        # HOME GUIDA ALPINA
         elif nome_gruppo == 'GuidaAlpina':
             preferiti = Preferito.objects.filter(escursionista=request.user).select_related('rifugio')
             rifugi_preferiti = [p.rifugio for p in preferiti]
             itinerari_guida = Itinerario.objects.filter(guida=request.user, data__gte=date.today()).order_by('data')
 
+        # HOME ADMIN
         elif nome_gruppo == 'Admin' or request.user.is_superuser:
             now = timezone.now()
             escursionisti = AuthUser.objects.filter(groups__name='Escursionista')
+            # Genera la classifica dei primi 5 escusionisti del mese per punteggio
             for u in escursionisti:
                 visite = Visita.objects.filter(
                     escursionista=u,
@@ -188,10 +194,11 @@ def home(request):
             classifica_rapida.sort(key=lambda x: x['punti'], reverse=True)
             classifica_rapida = classifica_rapida[:5]
 
+            # Recupera tutte le guide e i gestori registrati
             guide = AuthUser.objects.filter(groups__name='GuidaAlpina').prefetch_related('itinerari')
             gestori = AuthUser.objects.filter(groups__name='GestoreRifugio').prefetch_related('rifugi')
 
-            # Crea nuovo utente
+            # Permette all'admin di creare rapidamente un nuovo utente e assegnarlo ad un ruolo
             if request.method == 'POST' and request.POST.get('azione') == 'crea_utente':
                 username = request.POST.get('username')
                 password = request.POST.get('password')
@@ -223,11 +230,7 @@ def home(request):
         'quota_min': quota_min, 'quota_max': quota_max,
     })
 
-def visite_mese_corrente(queryset_visite):
-    """Filtra un queryset di Visita al solo mese corrente."""
-    now = timezone.now()
-    return queryset_visite.filter(data_visita__year=now.year, data_visita__month=now.month)
-
+# Mostra i dettagli completi, le recensioni e lo stato del soggiorno di un escusionista per un singolo rifugio
 def rifugio(request, pk):
     r = get_object_or_404(Rifugio, pk=pk)
     aggiorna_posti_disponibili(r)
@@ -237,7 +240,7 @@ def rifugio(request, pk):
     ha_timbro = False
     recensione_utente = None
     e_preferito = False
-    soggiorno_in_corso = False  # ← nuovo
+    soggiorno_in_corso = False
 
     if request.user.is_authenticated:
         prenotazione = Prenotazione.objects.filter(
@@ -253,11 +256,12 @@ def rifugio(request, pk):
             escursionista=request.user, rifugio=r
         ).exists()
 
-    # Il soggiorno è "in corso" se oggi è tra arrivo e partenza (inclusi)
+    # Il soggiorno è "in corso" se oggi è tra arrivo e partenza
     if prenotazione and prenotazione.stato == 'approvata':
         if prenotazione.data_arrivo < date.today() <= prenotazione.data_partenza:
-            soggiorno_in_corso = True  # ← nuovo
+            soggiorno_in_corso = True
 
+    # Nasconde la prenotazione passata se il soggiorno è terminato
     if prenotazione and prenotazione.data_partenza < date.today():
         prenotazione = None
 
@@ -268,15 +272,16 @@ def rifugio(request, pk):
         'ha_timbro': ha_timbro,
         'recensione_utente': recensione_utente,
         'e_preferito': e_preferito,
-        'soggiorno_in_corso': soggiorno_in_corso,  # ← nuovo
+        'soggiorno_in_corso': soggiorno_in_corso,
     })
 
+# Elenco pubblico di tutte le guide (lo vedo nella pagina "Trova la tua Guida") e degli itinerari in programma
 def guide(request):
     is_admin = request.user.is_authenticated and (
         request.user.groups.filter(name='Admin').exists() or request.user.is_superuser
     )
 
-    if request.method == 'POST' and is_admin:
+    if request.method == 'POST' and is_admin:   # L'admin puà aggiornare la biografia di una guida
         azione = request.POST.get('azione')
 
         if azione == 'modifica_profilo_guida_admin':
@@ -292,7 +297,7 @@ def guide(request):
             messages.success(request, 'Guida aggiornata!')
             return redirect('guide')
 
-    # Tutte le guide, con il loro profilo (se esiste), filtrabili per nome
+    # Filtro e ricerca per l'elenco delle guide
     guide_lista = AuthUser.objects.filter(groups__name='GuidaAlpina').select_related('profilo_guida').order_by('username')
     guida_q = request.GET.get('guida_q', '')
     if guida_q:
@@ -300,7 +305,7 @@ def guide(request):
             Q(username__icontains=guida_q) | Q(first_name__icontains=guida_q) | Q(last_name__icontains=guida_q)
         )
 
-    # Itinerari futuri, filtrabili
+    # Fitro e ricerca per l'elenco degli itinerari
     itinerari = Itinerario.objects.select_related('guida').prefetch_related('iscrizioni').filter(data__gte=date.today())
     q = request.GET.get('q', '')
     difficolta = request.GET.get('difficolta', '')
@@ -309,6 +314,7 @@ def guide(request):
     if difficolta:
         itinerari = itinerari.filter(difficolta=difficolta)
 
+    # Tiene traccia degli itinerari a cui l'escusionista (che in quel momento è loggato) si è registrato
     iscrizioni_utente = []
     if request.user.is_authenticated:
         iscrizioni_utente = list(
@@ -325,49 +331,14 @@ def guide(request):
         'is_admin': is_admin,
     })
 
-@gruppo_richiesto('Escursionista')
-def iscriviti_itinerario(request, pk):
-    it = get_object_or_404(Itinerario, pk=pk)
-    if request.method == 'POST':
-        if it.posti_disponibili > 0:
-            _, created = IscrizioneItinerario.objects.get_or_create(
-                escursionista=request.user,
-                itinerario=it
-            )
-            if created:
-                it.posti_disponibili -= 1
-                it.save()
-                messages.success(request, f'Iscritto a {it.titolo}!')
-            else:
-                messages.warning(request, 'Sei già iscritto a questo itinerario.')
-        else:
-            messages.error(request, 'Posti esauriti.')
-    return redirect('guide')
-
-@gruppo_richiesto('Escursionista')
-def iscriviti_evento(request, pk):
-    evento = get_object_or_404(Evento, pk=pk)
-    if request.method == 'POST':
-        if evento.posti_disponibili > 0:
-            _, created = IscrizioneEvento.objects.get_or_create(
-                escursionista=request.user,
-                evento=evento
-            )
-            if created:
-                evento.posti_disponibili -= 1
-                evento.save()
-                messages.success(request, f'Iscritto a {evento.titolo}!')
-            else:
-                messages.warning(request, 'Sei già iscritto.')
-        else:
-            messages.error(request, 'Posti esauriti.')
-    return redirect('eventi')
-
+# Elenco degli eventi organizzati nei vari rifugi
 def eventi(request):
     qs = Evento.objects.select_related('rifugio').filter(data__gte=date.today())
     q = request.GET.get('q', '')
     regione = request.GET.get('regione', '')
     dal = request.GET.get('dal', '')
+
+    # Filtro di ricerca
     if q:
         qs = qs.filter(titolo__icontains=q)
     if regione:
@@ -375,6 +346,7 @@ def eventi(request):
     if dal:
         qs = qs.filter(data__gte=dal)
 
+    # Elenco degli eventi a cui l'escusionista (loggato in quel momento) è già iscritto
     iscrizioni_utente = []
     if request.user.is_authenticated:
         iscrizioni_utente = list(
@@ -387,6 +359,7 @@ def eventi(request):
         'q': q, 'regione': regione, 'dal': dal,
     })
 
+# Verifica se un nome utente è già in uso
 def check_username(request):
     username = request.GET.get('username', '').strip()
     esiste = False
@@ -394,8 +367,8 @@ def check_username(request):
         esiste = AuthUser.objects.filter(username__iexact=username).exists()
     return JsonResponse({'esiste': esiste})
 
-# ─── VISTE RISTRETTE ──────────────────────────────────────────────────────────
-
+# AREA ESCUSIONISTA
+# Il passaporto racchiude visite, timbri ottenuti, recensioni e una bacheca con le ultime attività
 @gruppo_richiesto('Escursionista')
 def passaporto(request):
     visite = Visita.objects.filter(escursionista=request.user).select_related('rifugio').order_by('-data_visita')
@@ -404,10 +377,12 @@ def passaporto(request):
     prenotazioni = Prenotazione.objects.filter(escursionista=request.user)
     preferiti_qs = Preferito.objects.filter(escursionista=request.user)
 
+    # Conteggio dei punti ottenuti nel mese corrente
     now = timezone.now()
     visite_mese = visite.filter(data_visita__year=now.year, data_visita__month=now.month)
     punti_totali = sum(punti_rifugio(v.rifugio) for v in visite_mese)
 
+    # Lista che contine le attività fatte dall'escusionista in ordine cronologico nell'ultimo mese
     attivita = []
     trenta_giorni_fa = timezone.now() - timedelta(days=30)
 
@@ -431,6 +406,10 @@ def passaporto(request):
         'num_preferiti': preferiti_qs.count(),
     })
 
+# Aggiunge o rimuove un rifugio dai preferiti dell'escusionista supportando sia richieste AJAX sia normali richieste HTTP
+# AJAX è una tecnica che permette ad una pagina web di comunica con il server senza dover ricaricare tutta la pagina
+# La logica è che un mio utente quando clicca sul bottone per aggiungere ai preferiti grazie ad AJAX il mio script JS vede il clic e invia una richiesta in background senza dover far ricaricare la pagina
+# dopo di che sempre il mio script JS aggiorna l'icona e il mio escusionista vede un cambiamente istantaneo senza bisogno che la pagina si ricarichi
 @gruppo_richiesto('Escursionista')
 def toggle_preferito(request, pk):
     rifugio = get_object_or_404(Rifugio, pk=pk)
@@ -445,17 +424,18 @@ def toggle_preferito(request, pk):
         else:
             aggiunto = True
 
-        # Se la richiesta arriva da JavaScript (Fetch), rispondi in JSON
+        # Se la richiesta arriva da JavaScript in JSON
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'aggiunto': aggiunto})
 
-        # Fallback senza JS: comportamento originale con redirect
+        # Fallback senza JS comportamento originale con redirect
         if aggiunto:
             messages.success(request, f'{rifugio.nome} aggiunto ai preferiti!')
         else:
             messages.info(request, f'{rifugio.nome} rimosso dai preferiti.')
     return redirect('rifugio', pk=pk)
 
+# Invia una richiesta di prenotazione per un rifugio specifico
 @gruppo_richiesto('Escursionista')
 def prenota(request, pk):
     rifugio = get_object_or_404(Rifugio, pk=pk)
@@ -464,7 +444,7 @@ def prenota(request, pk):
         data_partenza = request.POST.get('data_partenza')
         num_ospiti = int(request.POST.get('num_ospiti', 1))
 
-        # Elimina prenotazione rifiutata precedente
+        # Elimina prenotazione rifiutata precedente per consentire di riprenotare
         Prenotazione.objects.filter(
             escursionista=request.user,
             rifugio=rifugio,
@@ -486,6 +466,7 @@ def prenota(request, pk):
             messages.error(request, f'Errore: {e}')
     return redirect('rifugio', pk=pk)
 
+# Consente il checkin inserendo un codice di 8 caratteri derivante dall'UUID del rifugio
 @gruppo_richiesto('Escursionista')
 def checkin(request):
     if request.method == 'POST':
@@ -502,15 +483,16 @@ def checkin(request):
                 messages.error(request, 'Codice non valido.')
                 return redirect('checkin')
 
-            # Ogni checkin crea SEMPRE una nuova Visita → punti garantiti
-            Visita.objects.create(escursionista=request.user, rifugio=rifugio)  # ← questo è andato a buon fine (infatti hai preso i punti)
-
+            # Ogni checkin crea sempre una nuova Visita quindi il mio escusionista riceve sempre punti
+            Visita.objects.create(escursionista=request.user, rifugio=rifugio)
+            
+            # NOTA: avevo avuto un problema con la storia dei Timbro e ho messo questo check, quindi se in un futuro aggiungo un capo a Timrbi senza fare la migrazione, questa riga fallisce perchè il Database non lo conosce ancora
             _, timbro_nuovo = Timbro.objects.get_or_create(
                 escursionista=request.user, rifugio=rifugio
-            )  # ← questo ha lanciato l'errore, perché il DB non conosce ancora il nuovo campo
+            )
 
             if timbro_nuovo:
-                messages.success(request, f'🎖️ Nuovo timbro conquistato al {rifugio.nome}! +{punti_rifugio(rifugio)} punti!')
+                messages.success(request, f'Nuovo timbro conquistato al {rifugio.nome}! +{punti_rifugio(rifugio)} punti!')
             else:
                 messages.success(request, f'Check-in registrato al {rifugio.nome}! +{punti_rifugio(rifugio)} punti!')
 
@@ -521,6 +503,7 @@ def checkin(request):
 
     return render(request, 'checkin.html')
 
+# Permette di scrivere una recensione a un rifugio solo se si è effettuata il pernottamento
 @gruppo_richiesto('Escursionista')
 def scrivi_recensione(request, pk):
     rifugio = get_object_or_404(Rifugio, pk=pk)
@@ -544,6 +527,7 @@ def scrivi_recensione(request, pk):
 
     return redirect('rifugio', pk=pk)
 
+# Consente all'escusionista di poter modificare il proprio profilo inclusa la password (opzionale)
 @gruppo_richiesto('Escursionista')
 def modifica_profilo(request):
     if request.method == 'POST':
@@ -552,7 +536,6 @@ def modifica_profilo(request):
         request.user.email = request.POST.get('email', '')
         request.user.save()
 
-        # Cambio password opzionale
         nuova_password = request.POST.get('nuova_password', '')
         if nuova_password:
             request.user.set_password(nuova_password)
@@ -564,6 +547,48 @@ def modifica_profilo(request):
 
     return render(request, 'rifugi/modifica_profilo.html')
 
+# Permette l'iscrizione di un escusionista a un itinerario programmato se ci sono posti liberi
+@gruppo_richiesto('Escursionista')
+def iscriviti_itinerario(request, pk):
+    it = get_object_or_404(Itinerario, pk=pk)
+    if request.method == 'POST':
+        if it.posti_disponibili > 0:
+            _, created = IscrizioneItinerario.objects.get_or_create(
+                escursionista=request.user,
+                itinerario=it
+            )
+            if created:
+                it.posti_disponibili -= 1
+                it.save()
+                messages.success(request, f'Iscritto a {it.titolo}!')
+            else:
+                messages.warning(request, 'Sei già iscritto a questo itinerario.')
+        else:
+            messages.error(request, 'Posti esauriti.')
+    return redirect('guide')
+
+# Permette l'iscrizione di un escusionista ad un evento programmato se ci sono posti liberi
+@gruppo_richiesto('Escursionista')
+def iscriviti_evento(request, pk):
+    evento = get_object_or_404(Evento, pk=pk)
+    if request.method == 'POST':
+        if evento.posti_disponibili > 0:
+            _, created = IscrizioneEvento.objects.get_or_create(
+                escursionista=request.user,
+                evento=evento
+            )
+            if created:
+                evento.posti_disponibili -= 1
+                evento.save()
+                messages.success(request, f'Iscritto a {evento.titolo}!')
+            else:
+                messages.warning(request, 'Sei già iscritto.')
+        else:
+            messages.error(request, 'Posti esauriti.')
+    return redirect('eventi')
+
+# AREA GESTORE RIFUGIO
+# Approvazione prenotazioni, eventi del rifugio e proposte di nuovi rifugi
 @gruppo_richiesto('GestoreRifugio')
 def dashboard_gestore(request):
     rifugi = Rifugio.objects.filter(gestore=request.user)
@@ -582,6 +607,7 @@ def dashboard_gestore(request):
     if request.method == 'POST':
         azione = request.POST.get('azione')
 
+        # Invia la proposta per un nuovo rifugio
         if azione == 'aggiungi_rifugio':
             form = NuovoRifugioForm(request.POST, request.FILES)
             if form.is_valid():
@@ -593,6 +619,7 @@ def dashboard_gestore(request):
             else:
                 nuovo_rifugio_form = form
 
+        # Modifica i dati di un rifugio esistente
         elif azione == 'modifica_rifugio':
             pk = request.POST.get('rifugio_pk')
             r = get_object_or_404(Rifugio, pk=pk, gestore=request.user)
@@ -601,16 +628,17 @@ def dashboard_gestore(request):
                 form.save()
                 messages.success(request, 'Rifugio aggiornato!')
 
+        # Approva una richiesta di prenotazione scalando anche i posti disponibili del rifugio
         elif azione == 'approva_prenotazione':
             pk = request.POST.get('prenotazione_pk')
             p = get_object_or_404(Prenotazione, pk=pk, rifugio__gestore=request.user)
             p.stato = 'approvata'
             p.save()
-            # Scala i posti disponibili
             p.rifugio.posti_disponibili = max(0, p.rifugio.posti_disponibili - p.num_ospiti)
             p.rifugio.save()
             messages.success(request, 'Prenotazione approvata!')
 
+        # Rifiuta una prenotazione
         elif azione == 'rifiuta_prenotazione':
             pk = request.POST.get('prenotazione_pk')
             p = get_object_or_404(Prenotazione, pk=pk, rifugio__gestore=request.user)
@@ -618,6 +646,7 @@ def dashboard_gestore(request):
             p.save()
             messages.success(request, 'Prenotazione rifiutata.')
 
+        # Crea un nuovo evento per il rifugio
         elif azione == 'crea_evento':
             form = EventoForm(request.POST, request.FILES)
             form.fields['rifugio'].queryset = rifugi
@@ -627,6 +656,7 @@ def dashboard_gestore(request):
             else:
                 evento_form = form
 
+        # Modifica i dati di un evento
         elif azione == 'modifica_evento':
             pk = request.POST.get('evento_pk')
             e = get_object_or_404(Evento, pk=pk, rifugio__gestore=request.user)
@@ -636,6 +666,7 @@ def dashboard_gestore(request):
                 form.save()
                 messages.success(request, 'Evento aggiornato!')
 
+        # Permette l'eliminazione di un evento
         elif azione == 'elimina_evento':
             pk = request.POST.get('evento_pk')
             e = get_object_or_404(Evento, pk=pk, rifugio__gestore=request.user)
@@ -652,6 +683,8 @@ def dashboard_gestore(request):
         'evento_form': evento_form,
     })
 
+# AREA GUIDA ALPINA
+# Consente alle guide di poter creare e modificare i proprio itinerari
 @gruppo_richiesto('GuidaAlpina')
 def dashboard_guida(request):
     itinerari = Itinerario.objects.filter(guida=request.user, data__gte=date.today()).prefetch_related('iscrizioni__escursionista').order_by('data')
@@ -659,6 +692,7 @@ def dashboard_guida(request):
     if request.method == 'POST':
         azione = request.POST.get('azione')
 
+        # Crea un nuovo itinerario
         if azione == 'crea_itinerario':
             form = ItinerarioForm(request.POST)
             if form.is_valid():
@@ -669,6 +703,7 @@ def dashboard_guida(request):
             else:
                 messages.error(request, 'Dati non validi: controlla i campi inseriti.')
 
+        # Modifica i dati di un itinerario
         elif azione == 'modifica_itinerario':
             pk = request.POST.get('itinerario_pk')
             it = get_object_or_404(Itinerario, pk=pk, guida=request.user)
@@ -679,6 +714,7 @@ def dashboard_guida(request):
             else:
                 messages.error(request, 'Dati non validi: controlla i campi inseriti.')
 
+        # Permette l'eliminazione di un itinerario
         elif azione == 'elimina_itinerario':
             pk = request.POST.get('itinerario_pk')
             it = get_object_or_404(Itinerario, pk=pk, guida=request.user)
@@ -689,12 +725,13 @@ def dashboard_guida(request):
 
     return render(request, 'rifugi/dashboard_guida.html', {'itinerari': itinerari})
 
+# AREA AMMINISTEATORE
+# Pannello per gli admin dove possono approvare dei rifugi proposti e avere un elenco di tutti i rifugi stabilendo massimo 5 rifugi mensili
 @gruppo_richiesto('Admin')
 def pannello_admin(request):
 
     rifugi_in_attesa = Rifugio.objects.filter(stato='in_attesa').select_related('gestore')
 
-    # ─── Ricerca sui rifugi approvati ───────────────────────────
     cerca_admin = request.GET.get('cerca_admin', '').strip()
     rifugi_tutti = Rifugio.objects.filter(stato='approvato').order_by('-id')
     if cerca_admin:
@@ -702,44 +739,31 @@ def pannello_admin(request):
             Q(nome__icontains=cerca_admin) | Q(regione__icontains=cerca_admin)
         )
 
-    now = timezone.now()
-
-    now = timezone.now()
-    escursionisti = User.objects.filter(groups__name='Escursionista')
-    classifica = []
-    for u in escursionisti:
-        visite = Visita.objects.filter(
-            escursionista=u,
-            data_visita__year=now.year,
-            data_visita__month=now.month
-        ).select_related('rifugio')
-        punti = sum(punti_rifugio(v.rifugio) for v in visite)
-        classifica.append({
-            'username': u.username,
-            'email': u.email,
-            'punti': punti,
-            'num_visite': visite.count(),
-        })
-    classifica.sort(key=lambda x: x['punti'], reverse=True)
-
     if request.method == 'POST':
         azione = request.POST.get('azione')
         pk = request.POST.get('rifugio_pk')
         r = get_object_or_404(Rifugio, pk=pk)
 
+        # Approva la proposta di un rifugio per poi pubblicarlo e dando la possibilità che tutti lo vedano
         if azione == 'approva':
             r.stato = 'approvato'
             r.save()
             messages.success(request, f'{r.nome} approvato!')
+        
+        # Rifiuta e cancella la proposta di inserimento
         elif azione == 'rifiuta':
             r.delete()
             messages.success(request, 'Rifugio rifiutato ed eliminato.')
+        
+        # Modifica manualmente l'altitudine (quindi modifica anche il punteggio)
         elif azione == 'modifica_altitudine':
             nuova = request.POST.get('altitudine')
             if nuova:
                 r.altitudine = int(nuova)
                 r.save()
                 messages.success(request, f'Altitudine di {r.nome} aggiornata!')
+        
+        # Aggiunge/Rimuove un rifugio dai rifugi mensili
         elif azione == 'toggle_mensile':
             if r.mensile:
                 r.mensile = False
@@ -759,6 +783,5 @@ def pannello_admin(request):
             'rifugi_in_attesa': rifugi_in_attesa,
             'rifugi_tutti': rifugi_tutti,
             'num_mensili': Rifugio.objects.filter(mensile=True).count(),
-            'classifica': classifica,
             'cerca_admin': cerca_admin,
         })
