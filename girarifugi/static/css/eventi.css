@@ -1,37 +1,40 @@
-/* ═══════════════════════════════════════════════════
-   eventi.css — Pagina scopri gli eventi
-   ═══════════════════════════════════════════════════ */
+/* CSS sia per eventi che per itinerari */
 
+/* Contenitore principale a griglia per visualizzare le card degli eventi */
 .eventi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Fa in modo che la griglia si adatti allo schermo */
+  gap: 1.25rem; /* Spazio uniforme tra le schede */
 }
 
+/* Contenitore della signola scheda dell'evento */
 .evento-card {
-  background: var(--white);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow: hidden;
+  overflow: hidden; /* Mi nasconde gli elementi di troppo */
   transition: transform 0.2s;
 }
-.evento-card:hover { transform: translateY(-3px); }
-
+/* Sollevamento verso l'altro quando ci passo il mouse */
+.evento-card:hover { 
+  transform: translateY(-3px); 
+}
+/* Mi uniforma le dimensioni dell'immagine che sia messa dall'utente o che sia un placeholder */
 .evento-card img,
 .evento-card-placeholder {
   width: 100%;
   height: 160px;
-  object-fit: cover;
+  object-fit: cover; /* Ritaglia l'immagine per riempire l'area senza distorcersi */
   display: block;
-  background: linear-gradient(135deg, var(--green) 0%, var(--blue-dark) 100%);
 }
 
-.evento-card-body { padding: 1.1rem 1.3rem 1.3rem; }
+/* Spaziatura interna per il testo della card */
+.evento-card-body { 
+  padding: 1.1rem 1.3rem 1.3rem; 
+}
 
+/* Badge per la data dell'evento e icona */
 .evento-data-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.3rem;  /* Spazio tra l'icona e il testo */
   background: var(--green-bg);
   color: var(--green-dark);
   font-size: 0.78rem;
@@ -40,8 +43,11 @@
   border-radius: 20px;
   margin-bottom: 0.6rem;
 }
-.evento-data-badge .material-icons { font-size: 0.9rem; }
+.evento-data-badge .material-icons { 
+  font-size: 0.9rem;
+}
 
+/* Titolo principale dell'evento */
 .evento-card-body h3 {
   font-size: 1rem;
   font-weight: 700;
@@ -49,6 +55,7 @@
   margin-bottom: 0.4rem;
 }
 
+/* Sezione con l'indicazione del Rifugio e icona */
 .evento-rifugio {
   display: flex;
   align-items: center;
@@ -57,8 +64,12 @@
   color: var(--gray);
   margin-bottom: 0.5rem;
 }
-.evento-rifugio .material-icons { font-size: 0.95rem; color: var(--green-dark); }
+.evento-rifugio .material-icons { 
+  font-size: 0.95rem; 
+  color: var(--green-dark); 
+}
 
+/* Descrizione dell'evento */
 .evento-descrizione {
   font-size: 0.85rem;
   color: var(--gray);
@@ -66,29 +77,19 @@
   margin-bottom: 0.75rem;
 }
 
+/* Footer del mio evento */
 .evento-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
+  flex-wrap: wrap;  /* Manda a capo se lo spazio non è sufficiente */
   gap: 0.5rem;
   margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--gray-light);
 }
 
-@media (max-width: 640px) {
-  .eventi-grid { grid-template-columns: 1fr; }
-}
-
-.evento-descrizione.clamped {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
+/* Pulsante per espandere/comprimere la biogradia della guida  con icona */
 .guida-bio-toggle {
     background: none;
     border: none;
@@ -101,7 +102,6 @@
     gap: 0.25rem;
     font-size: 0.85rem;
 }
-
 .guida-bio-toggle .material-icons {
     font-size: 1rem;
 }

@@ -1,17 +1,27 @@
+/* Principalmente css per la pagina dei Rifugi */
+
+/* Contenitori principale dell'immagine o del placeholder del rifugio */
 .detail-hero {
   width: 100%;
   height: 320px;
-  overflow: hidden;
+  overflow: hidden; /* Evita che l'immagine esca dai bordi arrotondati */
   border-radius: var(--radius);
   margin-bottom: 1.5rem;
 }
-.detail-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Regola l'immagine per coprire l'intera area senza distorcersi */
+.detail-hero img { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
+  display: block; 
+}
+/* Contenitore nel caso in cui l'immagine sia mancante */
 .detail-hero-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, var(--green) 0%, var(--blue-dark) 100%);
 }
 
+/* Intestazione: mi permette di avere titolo+bottoni nella stessa riga*/
 .detail-header {
   display: flex;
   align-items: center;
@@ -19,65 +29,147 @@
   gap: 1rem;
   margin-bottom: 0.75rem;
 }
-.detail-header h1 { font-size: 1.8rem; font-weight: 700; color: var(--blue-dark); line-height: 1.2; flex: 1; }
-
+/* Titolo del rifugio */
+.detail-header h1 { 
+  font-size: 1.8rem; 
+  font-weight: 700; 
+  color: var(--blue-dark); 
+  line-height: 1.2; 
+  flex: 1; 
+}
+/* Pulsante circolare per aggiungere/rimuovere dai Preferiti */
 .btn-preferito {
   background: var(--green-dark);
   color: var(--white);
   border: none;
-  border-radius: 50%;
+  border-radius: 50%; /* Mi rende il pulsante perfettamente tondo */
   width: 46px;
   height: 46px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  flex-shrink: 0; /* Impedisce al bottone di rimpicciolirsi se il titolo è molto lungo */
   box-shadow: var(--shadow);
   transition: background 0.2s;
 }
-.btn-preferito:hover { background: var(--blue-dark); }
+.btn-preferito:hover { 
+  background: var(--blue-dark); 
+}
 
-.detail-punti { color: var(--green-dark); font-weight: 700; font-size: 0.95rem; text-align: right; margin-bottom: 0.75rem; margin-top: -0.5rem; }
-.detail-descrizione { color: var(--gray); font-size: 0.92rem; line-height: 1.6; margin-bottom: 1.5rem; }
+/* Grafica per i punti che guadagni con quel rifugio */
+.detail-punti { 
+  color: var(--green-dark); 
+  font-weight: 700; 
+  font-size: 0.95rem; 
+  text-align: right; 
+  margin-bottom: 0.75rem; 
+  margin-top: -0.5rem; 
+}
 
+/* Descrizione del rifugio */
+.detail-descrizione { 
+  color: var(--gray); 
+  font-size: 0.92rem; 
+  line-height: 1.6; 
+  margin-bottom: 1.5rem; 
+}
+
+/* Griglia per le 4 schede statistiche del mio rifugio */
 .detail-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.6rem;
   margin-bottom: 1.5rem;
 }
-.detail-stat-card {
-  background: var(--blue-light);
-  border-radius: var(--radius);
-  padding: 0.9rem 0.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 0.3rem;
+/* Icona all'interno della stat card */
+.detail-stat-icon { 
+  font-size: 1.6rem !important; 
 }
-.detail-stat-icon { font-size: 1.6rem !important; color: var(--blue-dark); }
-.detail-stat-value { font-size: 0.88rem; font-weight: 700; color: var(--blue-dark); line-height: 1.2; }
-.detail-stat-label { font-size: 0.7rem; color: var(--white); }
+/* Valore numerico o testuale principale della statistica */
+.detail-stat-value { 
+  font-size: 0.88rem; 
+  font-weight: 700; 
+  color: var(--blue-dark); 
+  line-height: 1.2; 
+}
+/* Etichetta descrittiva sotto il valore */
+.detail-stat-label { 
+  font-size: 0.7rem;
+   color: var(--white); 
+}
+.detail-section { 
+  margin-bottom: 1.75rem; 
+}
+/* Titolo delle varie sezioni */
+.detail-section h2 { 
+  font-size: 1.2rem; 
+  font-weight: 700; 
+  color: var(--blue-dark); 
+  margin-bottom: 0.9rem; 
+}
+/* Elenchi puntati personalizzati */
+.detail-list { 
+  list-style: none; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 0.6rem; 
+}
+.detail-list li { 
+  font-size: 0.9rem; 
+  color: var(--blue-dark); 
+  display: flex; 
+  align-items: center; 
+  gap: 0.5rem; 
+}
+/* Icona personalizzata */
+.detail-list li .material-icons { 
+  font-size: 1.1rem; 
+  color: var(--green-dark); 
+}
 
-.detail-section { margin-bottom: 1.75rem; }
-.detail-section h2 { font-size: 1.2rem; font-weight: 700; color: var(--blue-dark); margin-bottom: 0.9rem; }
-
-.detail-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
-.detail-list li { font-size: 0.9rem; color: var(--blue-dark); display: flex; align-items: center; gap: 0.5rem; }
-.detail-list li .material-icons { font-size: 1.1rem; color: var(--green-dark); }
-
-/* Recensioni */
-.recensione-card { background: var(--blue-light); border-radius: var(--radius); padding: 1rem 1.1rem; margin-bottom: 0.75rem; }
-.recensione-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
-.recensione-header .material-icons { font-size: 1.4rem; color: var(--blue-dark); }
-.recensione-header strong { color: var(--blue-dark); font-size: 0.9rem; }
-.recensione-voto { display: flex; gap: 1px; margin-left: auto; }
-.star-on  { font-size: 1rem !important; color: #f5a623; }
-.star-off { font-size: 1rem !important; color: var(--gray-light); }
-.recensione-data { font-size: 0.78rem; color: var(--gray); }
-.recensione-card p { font-size: 0.88rem; color: var(--blue-dark); line-height: 1.5; }
+/* Card singola di una recensione */
+.recensione-card { 
+  background: var(--blue-light); 
+  border-radius: var(--radius); 
+  padding: 1rem 1.1rem; 
+  margin-bottom: 0.75rem; 
+}
+/* Intestazione della recensione (Nome utente, stelle, data) */
+.recensione-header { 
+  display: flex; 
+  align-items: center; 
+  gap: 0.5rem; 
+  margin-bottom: 0.5rem; 
+  flex-wrap: wrap; /* Manda a capo gli elementi se lo schermo è stretto */
+}
+/* Icona utente */
+.recensione-header .material-icons { 
+  font-size: 1.4rem; 
+  color: var(--blue-dark);
+}
+/* Nome dell'utente che ha scritto la recensione */
+.recensione-header strong { 
+  color: var(--blue-dark); 
+  font-size: 0.9rem; 
+}
+/* Voto e data sulla destra */
+.recensione-voto { 
+  display: flex; 
+  gap: 1px; 
+  margin-left: auto; 
+}
+.recensione-data { 
+  font-size: 0.78rem; 
+  color: var(--gray); 
+}
+/* Contenuto della recensione */
+.recensione-card p { 
+  font-size: 0.88rem; 
+  color: var(--blue-dark); 
+  line-height: 1.5; 
+}
+/* Quando non ho recensioni per il rifugio */
 .recensione-vuota {
   display: flex;
   flex-direction: column;
@@ -89,29 +181,26 @@
   border-radius: var(--radius);
   text-align: center;
 }
-.recensione-vuota .material-icons { font-size: 2rem; color: var(--gray-light); }
-
+/* Icona per il box dele recensioni vuoto */
+.recensione-vuota .material-icons { 
+  font-size: 2rem; 
+  color: var(--gray-light); 
+}
+/* Pulsante per l'invio della prenotazione */
 .btn-prenota {
   background: var(--blue-dark) !important;
 }
-.btn-prenota:hover { background: var(--blue) !important; }
-
+.btn-prenota:hover { 
+  background: var(--blue) !important; 
+}
+/* Disposizione dei campi del form di prenotazione */
 .prenota-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.75rem;
   margin-bottom: 0.75rem;
 }
-
-@media (max-width: 640px) {
-  .prenota-grid { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 640px) {
-  .detail-stats { grid-template-columns: repeat(2, 1fr); }
-  .detail-hero { height: 220px; }
-}
-
+/* Riepilogo dello stato della prenotazione */
 .prenota-stato {
   display: flex;
   align-items: center;
@@ -120,11 +209,38 @@
   border-radius: var(--radius);
   font-size: 0.9rem;
 }
-.prenota-stato p { font-weight: 600; color: var(--blue-dark); margin-bottom: 0.2rem; }
-.prenota-stato span:last-child { font-size: 0.8rem; color: var(--gray); }
-.prenota-stato.attesa { background: #fff3cd; }
-.prenota-stato.attesa .material-icons { color: #856404; font-size: 2rem; }
-.prenota-stato.approvata { background: var(--green-bg); }
-.prenota-stato.approvata .material-icons { color: var(--green-dark); font-size: 2rem; }
-.prenota-stato.rifiutata { background: #fde8e8; }
-.prenota-stato.rifiutata .material-icons { color: #c0392b; font-size: 2rem; }
+/* Testo principale dentro lo stato di prenotazione */
+.prenota-stato p { 
+  font-weight: 600; 
+  color: var(--blue-dark); 
+  margin-bottom: 0.2rem; 
+}
+/* Sottotitolo del riquadro di stato */
+.prenota-stato span:last-child { 
+  font-size: 0.8rem; 
+  color: var(--gray); 
+}
+/* Stato in attesa di approvazione con icona */
+.prenota-stato.attesa { 
+  background: #fff3cd; 
+}
+.prenota-stato.attesa .material-icons { 
+  color: #856404; 
+  font-size: 2rem; 
+}
+/* Stato approvata con icona */
+.prenota-stato.approvata { 
+  background: var(--green-bg); 
+}
+.prenota-stato.approvata .material-icons { 
+  color: var(--green-dark); 
+  font-size: 2rem; 
+}
+/* Stato rifiutata con icona */
+.prenota-stato.rifiutata { 
+  background: #fde8e8; 
+}
+.prenota-stato.rifiutata .material-icons { 
+  color: #c0392b; 
+  font-size: 2rem; 
+}

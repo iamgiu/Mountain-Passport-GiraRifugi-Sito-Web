@@ -1,8 +1,5 @@
-/* ═══════════════════════════════════════════════════
-   home.css — Hero, search bar, card rifugi, paginazione
-   ═══════════════════════════════════════════════════ */
 
-/* Hero non autenticata */
+/* Banner di benvenuto principale per utenti non ancora registrati o loggati */
 .hero {
   background: linear-gradient(135deg, var(--green-dark) 0%, var(--blue-dark) 100%);
   color: var(--white);
@@ -11,45 +8,44 @@
   text-align: center;
   margin-bottom: 2rem;
 }
-.hero h1 { font-size: 2.4rem; font-weight: 700; margin-bottom: 1rem; }
-.hero p   { font-size: 1.1rem; color: var(--green-light); margin-bottom: 2rem; }
-.hero-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
 
-/* Benvenuto */
-.home-welcome { margin-bottom: 1.25rem; }
-.home-welcome h1 { font-size: 2rem; font-weight: 700; color: var(--blue-dark); line-height: 1.2; }
-.home-welcome p  { color: var(--gray); margin-top: 0.4rem; font-size: 0.95rem; }
-
-/* Score card */
-.score-card {
-  background: linear-gradient(135deg, #2F629A 0%, #073B88 100%);
-  border-radius: var(--radius);
-  padding: 1.5rem 1.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 4px 18px rgba(7,59,136,0.25);
-}
-.score-card-text h2 { color: var(--white); font-size: 1.2rem; font-weight: 700; margin-bottom: 0.3rem; }
-.score-card-text p  { color: var(--blue-light); font-size: 0.85rem; margin-bottom: 1rem; max-width: 200px; }
-.btn-scopri {
-  display: inline-block;
-  background: var(--white);
-  color: var(--blue-dark);
-  font-size: 0.78rem;
+/* Titolo principale di Hero*/
+.hero h1 { 
+  font-size: 2.4rem; 
   font-weight: 700;
-  padding: 0.45rem 1.2rem;
-  border-radius: 20px;
-  letter-spacing: 0.5px;
-  text-decoration: none;
-  transition: opacity 0.2s;
+  margin-bottom: 1rem; 
 }
-.btn-scopri:hover { opacity: 0.85; text-decoration: none; color: var(--blue-dark); }
-.score-ring { position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.score-percent { position: absolute; color: var(--white); font-size: 1rem; font-weight: 700; }
+/* Paragrafo che fa da sottotitolo */
+.hero p   { 
+  font-size: 1.1rem; 
+  color: var(--green-light); 
+  margin-bottom: 2rem; 
+}
+/* Stile bottoni */
+.hero-buttons { 
+  display: flex; 
+  gap: 1rem; 
+  justify-content: center; 
+  flex-wrap: wrap; 
+}
 
-/* Search bar */
+/* Testo di Benvenuto personalizzato */
+.home-welcome { 
+  margin-bottom: 1.25rem; 
+}
+.home-welcome h1 { 
+  font-size: 2rem; 
+  font-weight: 700; 
+  color: var(--blue-dark); 
+  line-height: 1.2; 
+}
+.home-welcome p  { 
+  color: var(--gray); 
+  margin-top: 0.4rem; 
+  font-size: 0.95rem; 
+}
+
+/* Barra di ricerca dei rifugi */
 .search-bar {
   background: var(--white);
   border-radius: var(--radius);
@@ -64,83 +60,95 @@
 .search-bar input {
   flex: 1;
   min-width: 140px;
-  border: 1px solid var(--gray-light);
-  border-radius: 8px;
-  padding: 0.55rem 0.9rem;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 0.9rem;
-  color: var(--blue-dark);
-  outline: none;
-  transition: border-color 0.2s;
 }
-.search-bar input:focus { border-color: var(--green); }
-.search-bar input::placeholder { color: var(--gray); }
 
-/* Titolo sezione */
-.home-section-title { font-size: 1.4rem; font-weight: 700; color: var(--blue-dark); margin-bottom: 1rem; margin-top: 0.5rem; }
+/* Titolo per dividere le aree della home */
+.home-section-title { 
+  font-size: 1.4rem; 
+  font-weight: 700; 
+  color: var(--blue-dark); 
+  margin-bottom: 1rem; 
+  margin-top: 0.5rem; 
+}
 
-/* Rifugi scroll orizzontale */
+/* Permette lo scorrimento laterale dei rifugi in evidenza */
 .rifugi-scroll {
   display: flex;
   gap: 1rem;
-  overflow-x: auto;
+  overflow-x: auto; /* Attiva lo scroll orizzontale */
   padding-bottom: 1rem;
   margin-bottom: 1rem;
-  scrollbar-width: thin;
-  scrollbar-color: var(--green-light) transparent;
+  scrollbar-width: thin;  /* Spessore ridotto della scrollbar */
+  scrollbar-color: var(--green-light) transparent;  /* Colori della barra */
 }
-.rifugi-scroll::-webkit-scrollbar { height: 4px; }
-.rifugi-scroll::-webkit-scrollbar-thumb { background: var(--green-light); border-radius: 4px; }
+/* Stili personalizzati della scrollbar per browser */
+.rifugi-scroll::-webkit-scrollbar { 
+  height: 4px; 
+}
+.rifugi-scroll::-webkit-scrollbar-thumb { 
+  background: var(--green-light); 
+  border-radius: 4px; 
+}
 
+/* Card dei rifugi */
 .rifugio-card-big {
   position: relative;
   min-width: 260px;
   height: 200px;
   border-radius: var(--radius);
   overflow: hidden;
-  flex-shrink: 0;
+  flex-shrink: 0; /* Impedisce alla card di restringersi all'interno dello scroll */
   display: block;
   text-decoration: none;
   box-shadow: var(--shadow);
   transition: transform 0.2s;
 }
-.rifugio-card-big:hover { transform: translateY(-3px); text-decoration: none; }
-.rifugio-card-big img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Effetto al passaggio del mouse sulla card */
+.rifugio-card-big:hover { 
+  transform: translateY(-3px); 
+  text-decoration: none;
+}
+.rifugio-card-big img { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
+  display: block; 
+}
 .rifugio-card-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, var(--green) 0%, var(--blue-dark) 100%);
 }
+/* Overlay scuro sfumato per garantire la leggibilità del testo bianco */
 .rifugio-card-overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.10) 55%);
 }
-.rifugio-card-content { position: absolute; bottom: 0; left: 0; right: 0; padding: 1rem 1.1rem; color: var(--white); }
-.rifugio-card-content h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; line-height: 1.3; }
-.rifugio-card-meta { display: flex; gap: 1rem; font-size: 0.8rem; color: rgba(255,255,255,0.85); }
-
-/* Paginazione */
-.pagination {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  justify-content: center;
-  margin-top: 1.5rem;
-  font-size: 0.9rem;
-  color: var(--gray);
+/* Contenitore dei testi posizionato sopra l'immagine */
+.rifugio-card-content { 
+  position: absolute; 
+  bottom: 0; 
+  left: 0; 
+  right: 0; 
+  padding: 1rem 1.1rem; 
+  color: var(--white); 
 }
-.pagination a { color: var(--blue-dark); font-weight: 600; }
-
-/* Responsive */
-@media (max-width: 640px) {
-  .hero { padding: 2.5rem 1.5rem; }
-  .hero h1 { font-size: 1.7rem; }
-  .search-bar { flex-direction: column; }
-  .search-bar input { min-width: 100%; }
+/* Nome del rifugio all'interno della card */
+.rifugio-card-content h3 { 
+  font-size: 0.95rem; 
+  font-weight: 700; 
+  margin-bottom: 0.4rem; 
+  line-height: 1.3; 
+}
+/* Dati importanti del rifugio all'interno della card */
+.rifugio-card-meta { 
+  display: flex; 
+  gap: 1rem; 
+  font-size: 0.8rem; 
+  color: rgba(255,255,255,0.85); 
 }
 
-/* ── Alert card gestore ── */
+/* Card di notifica posizionata nella dashboard  */
 .alert-card {
   background: #fff3cd;
   border-radius: var(--radius);
@@ -151,34 +159,35 @@
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
 }
-.alert-card .material-icons { color: #856404; font-size: 1.5rem; }
-.alert-card p { flex: 1; font-size: 0.9rem; color: #856404; }
+.alert-card .material-icons { 
+  color: #856404; 
+  font-size: 1.5rem; 
+}
+.alert-card p { 
+  flex: 1; 
+  font-size: 0.9rem; 
+  color: #856404; 
+}
 
-/* ── Rifugi gestore grid ── */
+/* Griglia per visualizzare i rifugi controllati dal gestore */
 .rifugi-gestore-grid {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
+/* Card del singolo rifugio gestito */
 .rifugio-gestore-card {
-  background: var(--white);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
   display: flex;
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 1rem;
   transition: transform 0.2s;
 }
-.rifugio-gestore-img {
-  width: 72px;
-  height: 72px;
-  border-radius: var(--radius-sm);
-  object-fit: cover;
-  flex-shrink: 0;
+.rifugio-gestore-card:hover { 
+  transform: translateY(-2px); 
 }
-.rifugio-gestore-card:hover { transform: translateY(-2px); }
+.rifugio-gestore-img,
 .rifugio-gestore-card img,
 .rifugio-gestore-placeholder {
   width: 72px;
@@ -186,11 +195,33 @@
   border-radius: var(--radius-sm);
   object-fit: cover;
   flex-shrink: 0;
-  background: linear-gradient(135deg, var(--green) 0%, var(--blue-dark) 100%);
 }
-.rifugio-gestore-body { flex: 1; }
-.rifugio-gestore-body h3 { font-size: 1rem; font-weight: 700; color: var(--blue-dark); margin-bottom: 0.25rem; }
-.rifugio-gestore-body p  { font-size: 0.82rem; color: var(--gray); margin-bottom: 0.4rem; }
+.rifugio-gestore-body { 
+  flex: 1; 
+}
+.rifugio-gestore-body h3 { 
+  font-size: 1rem; 
+  font-weight: 700; 
+  color: var(--blue-dark); 
+  margin-bottom: 0.25rem; 
+}
+.rifugio-gestore-body p  { 
+  font-size: 0.82rem; 
+  color: var(--gray); 
+  margin-bottom: 0.4rem; 
+}
 
-.btn-reset { background-color: transparent; color: var(--blue-dark); border: 2px solid var(--white); }
-.btn-reset:hover { background-color: var(--white); color: red; text-decoration: none; }
+/* Contenitore per i tasti a fondo pagina */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--gray);
+}
+.pagination a { 
+  color: var(--blue-dark); 
+  font-weight: 600; 
+}

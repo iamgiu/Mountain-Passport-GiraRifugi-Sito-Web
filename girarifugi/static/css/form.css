@@ -1,34 +1,52 @@
+/* Contenitore del mio form (come login e registrazione) centrato e ombreggiato */
 .form-container {
   background: var(--white);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 2rem;
   max-width: 480px;
-  margin: 0 auto;
+  margin: 0 auto; /* Centra orizzontalmente il contenuto nella pagina */
 }
-.form-container h2 { margin-bottom: 1.5rem; font-size: 1.4rem; color: var(--blue-dark); }
+
+/* Titolo principale del mio form */
+.form-container h2 { 
+  margin-bottom: 1.5rem; 
+  font-size: 1.4rem; 
+  color: var(--blue-dark); 
+}
  
-.form-group { margin-bottom: 1.1rem; }
-.form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--blue-dark); margin-bottom: 0.35rem; }
+.form-group { 
+  margin-bottom: 1.1rem; 
+}
+/* Etichetta di testo associata al capo di input */
+.form-group label {
+  display: block;   /* Sposta l'etichetta su una riga separata rispetto all'input */
+  font-size: 0.85rem; 
+  font-weight: 600; 
+  color: var(--blue-dark); 
+  margin-bottom: 0.35rem; 
+}
+/* Stile per i campi di testo, menu a tendina e aree di testo */
 .form-group input,
 .form-group select,
 .form-group textarea {
   width: 100%;
-  border: 1px solid var(--gray-light);
-  border-radius: var(--radius-sm);
-  padding: 0.6rem 0.9rem;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 0.9rem;
-  color: var(--blue-dark);
-  outline: none;
-  transition: border-color 0.2s;
 }
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus { border-color: var(--green); }
-.form-group .helptext { font-size: 0.78rem; color: var(--gray); margin-top: 0.25rem; }
-.errorlist { color: #c0392b; font-size: 0.82rem; margin-top: 0.25rem; list-style: none; }
+/* Testo informativo che si trova sotto all'input */
+.form-group .helptext { 
+  font-size: 0.78rem; 
+  color: var(--gray); 
+  margin-top: 0.25rem; 
+}
 
+/* Lista di messaggi di errore generata automaticamente da Django */
+.errorlist { 
+  color: #c0392b; 
+  font-size: 0.82rem; 
+  margin-top: 0.25rem; 
+  list-style: none; 
+}
+/* Avviso di errori importanti a livello di form */
 .avviso-errore {
     color: #b00020;
     background-color: #fdecea;

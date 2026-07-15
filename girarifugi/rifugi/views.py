@@ -503,7 +503,7 @@ def checkin(request):
 
     return render(request, 'checkin.html')
 
-# Permette di scrivere una recensione a un rifugio solo se si è effettuata il pernottamento
+# Permette di scrivere una recensione a un rifugio solo se si è effettuato il checkin
 @gruppo_richiesto('Escursionista')
 def scrivi_recensione(request, pk):
     rifugio = get_object_or_404(Rifugio, pk=pk)

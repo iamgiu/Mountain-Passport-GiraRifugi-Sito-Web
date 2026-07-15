@@ -11,9 +11,9 @@
 <!-- FILTRI -->
 <div class="search-bar" style="margin-bottom:1.5rem;">
     <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap; width:100%;">
-        <input type="text" name="q" placeholder="Cerca evento..." value="{{ q }}">
-        <input type="text" name="regione" placeholder="Regione" value="{{ regione }}">
-        <input type="date" name="dal" value="{{ dal }}">
+        <input type="text" name="q" class="input-base" placeholder="Cerca evento..." value="{{ q }}">
+        <input type="text" name="regione" class="input-base" placeholder="Regione" value="{{ regione }}">
+        <input type="date" name="dal" class="input-base" value="{{ dal }}">
         <button type="submit" class="btn btn-primary">Cerca</button>
         {% if q or regione or dal %}
         <a href="{% url 'eventi' %}" class="btn btn-outline">Azzera</a>
@@ -24,13 +24,13 @@
 {% if eventi %}
 <div class="eventi-grid">
     {% for evento in eventi %}
-    <div class="evento-card">
+    <div class="evento-card card-base">
         {% if evento.immagine %}
             <img src="{{ evento.immagine.url }}" alt="{{ evento.titolo }}">
         {% elif evento.rifugio.immagine %}
             <img src="{{ evento.rifugio.immagine.url }}" alt="{{ evento.titolo }}">
         {% else %}
-            <div class="evento-card-placeholder"></div>
+            <div class="evento-card-placeholder img-placeholder"></div>
         {% endif %}
         <div class="evento-card-body">
             <div class="evento-data-badge">
